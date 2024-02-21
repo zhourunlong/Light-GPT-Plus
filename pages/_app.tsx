@@ -10,19 +10,19 @@ function App({ Component, pageProps }: AppProps) {
     // 设置默认语言
     i18n.changeLanguage('en');
 
-    useEffect(() => {
-        if (
-            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-                navigator.userAgent
-            )
-        ) {
-            const app = document.querySelector('#app') as HTMLElement;
-            const appAside = document.querySelector('#appAside') as HTMLElement;
-            if (!app || !appAside) return;
-            app.style.height = window.innerHeight + 'px';
-            appAside.style.height = window.innerHeight + 'px';
-        }
-    }, []);
+    // useEffect(() => {
+    //     if (
+    //         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    //             navigator.userAgent
+    //         )
+    //     ) {
+    //         const app = document.querySelector('#app') as HTMLElement;
+    //         const appAside = document.querySelector('#appAside') as HTMLElement;
+    //         if (!app || !appAside) return;
+    //         app.style.height = window.innerHeight + 'px';
+    //         appAside.style.height = window.innerHeight + 'px';
+    //     }
+    // }, []);
     return <Component {...pageProps} />;
 }
 

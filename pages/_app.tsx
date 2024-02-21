@@ -8,7 +8,7 @@ import i18n from '../i18n';
 
 function App({ Component, pageProps }: AppProps) {
     // 设置默认语言
-    i18n.changeLanguage('zh');
+    i18n.changeLanguage('en');
 
     useEffect(() => {
         if (

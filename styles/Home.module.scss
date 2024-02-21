@@ -210,9 +210,6 @@
                     position: relative;
                     display: flex;
                     align-items: center;
-                    .mobileAction {
-                        display: none;
-                    }
                     .userPrompt {
                         margin-left: 20px;
                         width: 70vw;
@@ -442,10 +439,6 @@
     a {
         color: var(--text-color-dark);
     }
-
-    .mobileAsideShowMask {
-        display: none;
-    }
 }
 
 // Mobile devices,iPad,Tablets
@@ -521,25 +514,6 @@
                     .textareaContainer {
                         display: flex;
                         justify-content: center;
-                        .mobileAction {
-                            display: block;
-                            position: absolute;
-                            top: -34px;
-                            left: 50%;
-                            margin-left: -45px;
-                            .btn {
-                                height: 30px;
-                                width: 90px;
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                                border-radius: 6px;
-                                border: 1px solid var(--text-color-dark);
-                                font-size: 14px;
-                                color: var(--text-color-dark);
-                                background-color: var(--body-bg);
-                            }
-                        }
                         .userPrompt {
                             width: 96vw;
                             margin: 0;
@@ -665,18 +639,6 @@
             .buttonsContainer {
                 justify-content: space-around;
             }
-        }
-
-        .mobileAsideShowMask {
-            display: block;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: var(--text-color-dark);
-            opacity: 0.8;
-            z-index: 1;
         }
     }
 }

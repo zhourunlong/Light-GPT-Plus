@@ -50,8 +50,7 @@ const MessageItem: React.FC<{
     message: string;
     avatar: string;
     removeMessageById?: (id: string) => void;
-    isTemp?: boolean;
-}> = ({ id, role, message, avatar, removeMessageById, isTemp }) => {
+}> = ({ id, role, message, avatar, removeMessageById}) => {
     const isImgResponse = message?.startsWith(
         'https://oaidalleapiprodscus.blob.core.windows.net/private'
     );
@@ -144,7 +143,6 @@ const MessageItem: React.FC<{
                             src={avatar}
                             alt="user"
                         />
-                       {isTemp &&  <div className={styles.typingAnimation}></div>}
                     </div>
                 </>
             ) : (
@@ -157,7 +155,6 @@ const MessageItem: React.FC<{
                             src={avatar}
                             alt="robot"
                         />
-                        { isTemp && <div className={styles.replyingAnimation}></div> }
                     </div>
                     {isImgResponse ? (
                         <div className={styles.imgContent}>

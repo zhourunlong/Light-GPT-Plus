@@ -49,23 +49,14 @@ const chatDB = new ChatService();
 
 export default function Home() {
     const windowState = useRef({
-        isMobile: false,
         windowHeight: 0,
         virtualKeyboardVisible: false,
         isUsingComposition: false,
     });
 
-    const [isMobile, setIsMobile] = useState(false);
-
     useEffect(() => {
         const handleWindowResize = () => {
             console.log('resize event--');
-            const isMobile =
-                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-                    window.navigator.userAgent
-                ) || window.innerWidth <= 768;
-            setIsMobile(isMobile);
-            windowState.current.isMobile = isMobile;
             windowState.current.windowHeight = window.innerHeight;
             windowState.current.virtualKeyboardVisible =
                 window.innerHeight < windowState.current.windowHeight;
@@ -314,6 +305,7 @@ export default function Home() {
         const prompt = newMessageList[newMessageList.length - 1].content;
         const isGenerateImage = prompt.startsWith(GenerateImagePromptPrefix);
 
+        // get response
         try {
             setServiceErrorMessage('');
             setLoading(true);
@@ -568,7 +560,6 @@ export default function Home() {
                                     role={ERole.user}
                                     avatar={userAvatar}
                                     message={currentUserMessage}
-                                    isTemp
                                 />
                             )}
                             {loading && currentAssistantMessage.length > 0 && (
@@ -577,7 +568,6 @@ export default function Home() {
                                     role={ERole.assistant}
                                     avatar={robotAvatar}
                                     message={currentAssistantMessage}
-                                    isTemp
                                 />
                             )}
                             <div className={styles.placeholder}>
@@ -611,36 +601,6 @@ export default function Home() {
                     <div className={styles.action}></div>
                     <div className={styles.middle}>
                         <div className={styles.textareaContainer}>
-                            {/** mobile regenerate and stop action */}
-                            <div className={styles.mobileAction}>
-                                {loading ? (
-                                    <div
-                                        className={styles.btn}
-                                        onClick={() => {
-                                            if (controller.current) {
-                                                controller.current.abort();
-                                                setLoading(false);
-                                                archiveCurrentMessage(
-                                                    currentAssistantMessage
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        Stop
-                                    </div>
-                                ) : (
-                                    <div
-                                        className={styles.btn}
-                                        onClick={() =>
-                                            chatGPTTurboWithLatestUserPrompt(
-                                                true
-                                            )
-                                        }
-                                    >
-                                        Regenerate
-                                    </div>
-                                )}
-                            </div>
                             <textarea
                                 className={styles.userPrompt}
                                 disabled={loading}
@@ -665,39 +625,21 @@ export default function Home() {
                                 placeholder={`Message Light GPT plus...`}
                                 rows={1}
                                 onKeyDown={(event) => {
-                                    // pc desktop
-                                    if (!windowState.current.isMobile) {
-                                        if (
-                                            event.code === 'Enter' &&
-                                            !event.shiftKey &&
-                                            !event.metaKey &&
-                                            !event.ctrlKey
-                                        ) {
-                                            if (
-                                                windowState.current
-                                                    .isUsingComposition
-                                            )
-                                                return;
-                                            chatGPTTurboWithLatestUserPrompt(
-                                                false
-                                            );
-                                            event.preventDefault();
-                                        }
-                                    }
-                                    // mobile desktop
                                     if (
-                                        windowState.current.isMobile &&
-                                        (event.key === 'Enter' ||
-                                            event.key === 'Done')
+                                        event.code === 'Enter' &&
+                                        !event.shiftKey &&
+                                        !event.metaKey &&
+                                        !event.ctrlKey
                                     ) {
-                                        (
-                                            document.activeElement as HTMLElement
-                                        ).blur();
-                                    }
-                                }}
-                                onBlur={() => {
-                                    if (windowState.current.isMobile) {
-                                        chatGPTTurboWithLatestUserPrompt(false);
+                                        if (
+                                            windowState.current
+                                                .isUsingComposition
+                                        )
+                                            return;
+                                        chatGPTTurboWithLatestUserPrompt(
+                                            false
+                                        );
+                                        event.preventDefault();
                                     }
                                 }}
                                 onCompositionStart={() => {
@@ -909,9 +851,6 @@ export default function Home() {
                     <div className={styles.loadingSpinner}></div>
                 </div>
             )}
-
-            {/** mobile aside show mask */}
-            {asideVisible && <div className={styles.mobileAsideShowMask}></div>}
         </div>
     );
 }

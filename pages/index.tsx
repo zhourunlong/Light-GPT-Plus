@@ -24,7 +24,6 @@ import IndexHeader from './components/IndexHeader';
 import HeadMeatSetup from './components/HeadMetaSetup';
 
 import MessageItem from './components/MessageItem';
-import AvatarUploader from './components/AvatarUploader';
 
 import HistoryTopicList from './components/HistoryTopicList';
 
@@ -39,8 +38,6 @@ import OpenAI from 'openai';
 import {
     dataURItoBlob,
     ThemeLocalKey,
-    UserAvatarLocalKey,
-    RobotAvatarLocalKey,
     APIKeyLocalKey,
     GenerateImagePromptPrefix,
     encryptApiKey,
@@ -399,24 +396,9 @@ export default function Home() {
         }
     };
 
-    // 头像
-    const [robotAvatar, setRobotAvatar] = useState<string>('/robot.png');
-
-    const updateRobotAvatar = (img: string) => {
-        setRobotAvatar(img);
-        setActiveSystemMenu('');
-
-        window.localStorage.setItem(RobotAvatarLocalKey, img);
-    };
-
-    const [userAvatar, setUserAvatar] = useState<string>('/fox.png');
-
-    const updateUserAvatar = (img: string) => {
-        setUserAvatar(img);
-        setActiveSystemMenu('');
-
-        window.localStorage.setItem(UserAvatarLocalKey, img);
-    };
+    // Avatars
+    const robotAvatar = '/assistant.jpeg';
+    const userAvatar = '/user.jpeg';
 
     const [activeTopicId, setActiveTopicId] = useState('');
     const changeActiveTopicId = useCallback((id: string) => {
@@ -427,12 +409,6 @@ export default function Home() {
         const light_gpt_theme =
             window.localStorage.getItem(ThemeLocalKey) || 'light';
         setTheme(light_gpt_theme as Theme);
-        const light_gpt_user_avatar =
-            window.localStorage.getItem(UserAvatarLocalKey) || '/fox.png';
-        setUserAvatar(light_gpt_user_avatar);
-        const light_gpt_robot_avatar =
-            window.localStorage.getItem(RobotAvatarLocalKey) || '/robot.png';
-        setRobotAvatar(light_gpt_robot_avatar);
 
         const light_gpt_api_key =
             window.localStorage.getItem(APIKeyLocalKey) || '';
@@ -453,16 +429,6 @@ export default function Home() {
     const { t, i18n } = useTranslation();
 
     const SystemMenus = [
-        {
-            label: t('robotAvatarSetting'),
-            iconName: 'fa-robot',
-            value: SystemSettingMenu.robotAvatarSettings,
-        },
-        {
-            label: t('userAvatarSettings'),
-            iconName: 'fa-user',
-            value: SystemSettingMenu.userAvatarSettings,
-        },
         {
             label: t('systemRoleSettings'),
             iconName: 'fa-id-badge',
@@ -857,22 +823,6 @@ export default function Home() {
                             setActiveSystemMenu('');
                         }}
                     ></i>
-                    {activeSystemMenu ===
-                        SystemSettingMenu.robotAvatarSettings && (
-                        <AvatarUploader
-                            title={t('robotAvatarSetting')}
-                            img={robotAvatar}
-                            updateAvatar={updateRobotAvatar}
-                        />
-                    )}
-                    {activeSystemMenu ===
-                        SystemSettingMenu.userAvatarSettings && (
-                        <AvatarUploader
-                            title={t('userAvatarSettings')}
-                            img={userAvatar}
-                            updateAvatar={updateUserAvatar}
-                        />
-                    )}
                     {activeSystemMenu ===
                         SystemSettingMenu.systemRoleSettings && (
                         <div className={styles.systemRoleSettings}>

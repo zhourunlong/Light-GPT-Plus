@@ -2,8 +2,6 @@
     "changeLanguage": "Change Language",
     "changeDarkMode": "Light Mode",
     "changeLightMode": "Dark Mode",
-    "robotAvatarSetting": "Robot Avatar ",
-    "userAvatarSettings": "User Avatar ",
     "systemRoleSettings": "System Role ",
     "systemRoleDescription": "System role refers to the role identity in the generated text, which can be different characters, robots, or other entities. By setting different system roles, you can control the emotions and tone of the generated text to better adapt to the needs of specific scenarios.",
     "systemRoleHelp": "Do not know how to define system role? Come Awesome ChatGPT Prompts to choose the system role you want: ",

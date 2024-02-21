@@ -2,8 +2,6 @@
     "changeLanguage": "切换语言",
     "changeDarkMode": "浅色模式",
     "changeLightMode": "深色模式",
-    "robotAvatarSetting": "机器人头像设置",
-    "userAvatarSettings": "用户头像设置",
     "systemRoleSettings": "系统角色设置",
     "systemRoleDescription": "系统角色指生成的文本中的角色身份，可以是不同的人物、机器人或其他实体。通过设置不同的系统角色，您可以控制生成文本的情感和语气，以更好地适应特定场景的需求。",
     "systemRoleHelp": "不知道如何定义系统角色？来试试 Awesome ChatGPT Prompts，选择您想要的系统角色：",

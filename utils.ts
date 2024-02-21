@@ -100,8 +100,6 @@ export const formatTimestamp = (timestamp: number) => {
 };
 
 export const ThemeLocalKey = 'light_gpt_theme';
-export const UserAvatarLocalKey = 'light_gpt_user_avatar';
-export const RobotAvatarLocalKey = 'light_gpt_robot_avatar';
 export const SystemRoleLocalKey = 'light_gpt_system_role';
 export const APIKeyLocalKey = 'light_gpt_api_key';
 

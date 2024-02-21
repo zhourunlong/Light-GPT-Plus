@@ -7,22 +7,9 @@ import 'normalize.css';
 import i18n from '../i18n';
 
 function App({ Component, pageProps }: AppProps) {
-    // 设置默认语言
+    // set default language to English
     i18n.changeLanguage('en');
 
-    // useEffect(() => {
-    //     if (
-    //         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    //             navigator.userAgent
-    //         )
-    //     ) {
-    //         const app = document.querySelector('#app') as HTMLElement;
-    //         const appAside = document.querySelector('#appAside') as HTMLElement;
-    //         if (!app || !appAside) return;
-    //         app.style.height = window.innerHeight + 'px';
-    //         appAside.style.height = window.innerHeight + 'px';
-    //     }
-    // }, []);
     return <Component {...pageProps} />;
 }
 

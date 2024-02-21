@@ -435,20 +435,10 @@ export default function Home() {
                     <IndexHeader
                         theme={theme}
                         updateTheme={updateTheme}
+                        selectedModel={selectedModel}
+                        setSelectedModel={setSelectedModel}
                     />
                 </div>
-                <div className={styles.modelSelector}>
-                    <label htmlFor="modelSelect">Choose a model:</label>
-                    <select
-                        id="modelSelect"
-                        value={selectedModel}
-                        onChange={(e) => setSelectedModel(e.target.value)}
-                    >
-                        <option value="gpt-3.5-turbo">GPT-3.5 turbo</option>
-                        <option value="gpt-4">GPT-4</option>
-                    </select>
-                </div>
-
                 <div className={styles.main}>
                     {apiKey ? (
                         <div

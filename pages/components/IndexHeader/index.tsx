@@ -7,12 +7,21 @@ import styles from './index.module.scss';
 const IndexHeader: React.FC<{
     theme: Theme;
     updateTheme: (theme: Theme) => void;
-} > = () => {
+    selectedModel: string;
+    setSelectedModel: (model: string) => void;
+} > = ({selectedModel, setSelectedModel}) => {
 
     return (
         <div className={styles.headerContainer}>
-            <div className={styles.currentApiKeyBilling}>
-                {/*Keep this to remain formated*/}
+            <div className={styles.modelSelector}>
+                <select
+                    id="modelSelect"
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                >
+                    <option value="gpt-3.5-turbo">GPT-3.5 turbo</option>
+                    <option value="gpt-4">GPT-4</option>
+                </select>
             </div>
 
             <div className={styles.siteIntroduction}>

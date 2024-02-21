@@ -735,7 +735,9 @@ export default function Home() {
                             </div>
                         </div>
                         <div className={styles.siteDescription}>
-                            <span>Made by wjm</span>
+                            <span>Extension by Vector Zhou</span>
+                            <span>｜</span>
+                            <span><a href="https://github.com/riwigefi/light-gpt">Light GPT made by wjm</a></span>
                             <span>｜</span>
                             <span>Just have fun</span>
                         </div>

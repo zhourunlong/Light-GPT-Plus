@@ -115,7 +115,6 @@ export default function Home() {
         setMessageList(messages);
     }, []);
 
-    const [currentUserMessage, setCurrentUserMessage] = useState('');
     const tempCurrentUserMessageId = useRef(uuid());
     const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -202,7 +201,6 @@ export default function Home() {
         }
 
         setMessageList(newMessageList);
-        setCurrentUserMessage('');
         userPromptRef.current!.value = '';
         if (!userPromptRef.current) return;
         userPromptRef.current.style.height = 'auto';
@@ -460,14 +458,6 @@ export default function Home() {
                                         removeMessageById={removeMessageById}
                                     />
                                 ))}
-                            {!loading && currentUserMessage.length > 0 && (
-                                <MessageItem
-                                    id={tempCurrentUserMessageId.current}
-                                    role={ERole.user}
-                                    avatar={userAvatar}
-                                    message={currentUserMessage}
-                                />
-                            )}
                             {loading && currentAssistantMessage.length > 0 && (
                                 <MessageItem
                                     id={tempCurrentAssistantMessageId.current}

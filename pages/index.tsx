@@ -28,11 +28,13 @@ import AvatarUploader from './components/AvatarUploader';
 
 import HistoryTopicList from './components/HistoryTopicList';
 
-import { chatWithGptTurbo, generateImageWithText } from '../open.ai.service';
+import { generateImageWithText } from '../open.ai.service';
 
 import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 
 import { ChatService } from '../db';
+
+import OpenAI from 'openai';
 
 import {
     dataURItoBlob,
@@ -279,12 +281,16 @@ export default function Home() {
         // 先把用户输入信息展示到对话列表
         const currentUserMessage = userPromptRef.current?.value || '';
         if (!isRegenerate && !currentUserMessage) {
-            toast.warn('Please  Enter your question', { autoClose: 1000 });
+            toast.warn('Please enter your question', { autoClose: 1000 });
             return;
         }
 
-        const newMessageList = messageList.concat([]);
-        if (!isRegenerate) {
+        let newMessageList = [];
+        if (isRegenerate) {
+            // Delete the last assistant message
+            newMessageList = messageList.slice(0, -1).concat([]);
+        } else {
+            newMessageList = messageList.concat([]);
             const newUserMessage = {
                 role: ERole.user,
                 content: currentUserMessage,
@@ -301,25 +307,6 @@ export default function Home() {
             }
         }
 
-        // 当前问答的对话上下文
-        const len = newMessageList.length;
-        const latestMessageLimit3 = newMessageList.filter(
-            (_, idx) => idx >= len - (contextMessageCount + 1)
-        );
-        if (
-            !latestMessageLimit3.some(
-                (item) => item.role === ERole.system && !!item.content
-            )
-        ) {
-            // default system role setting
-            latestMessageLimit3.unshift({
-                role: ERole.system,
-                content: systemRole.content,
-                id: systemRole.id,
-                createdAt: systemRole.createdAt,
-            });
-        }
-
         setMessageList(newMessageList);
         setCurrentUserMessage('');
         userPromptRef.current!.value = '';
@@ -327,84 +314,65 @@ export default function Home() {
         userPromptRef.current.style.height = 'auto';
         scrollSmoothThrottle();
 
-        const prompt =
-            latestMessageLimit3?.[latestMessageLimit3.length - 1]?.content ||
-            '';
-
-        const isGenerateImage =
-            prompt?.startsWith(GenerateImagePromptPrefix) || false;
+        const prompt = newMessageList[newMessageList.length - 1].content;
+        const isGenerateImage = prompt.startsWith(GenerateImagePromptPrefix);
 
         try {
             setServiceErrorMessage('');
             setLoading(true);
             controller.current = new AbortController();
 
-            let response: Response;
+            //let response: Response;
+            let response: string;
             if (isGenerateImage) {
                 response = await generateImageWithText(
                     apiKey,
                     prompt,
                     controller.current
                 );
-            } else {
-                // user api key
-                response = await chatWithGptTurbo(
-                    apiKey,
-                    latestMessageLimit3,
-                    controller.current
-                );
-            }
-
-            apiRequestRateLimit.current.requestsThisMinute += 1;
-
-            if (!response.ok) {
-                throw new Error(response.statusText);
-            }
-            if (isGenerateImage) {
                 const generateImgInfo = await response.json();
                 archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
                 setTimeout(() => {
                     scrollSmoothThrottle();
                 }, 2000);
             } else {
-                const data = response.body;
-                if (!data) {
-                    throw new Error('No Data');
+                // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
+                let openai = new OpenAI({
+                    baseURL: `http://192.168.1.2:1234/v1`,
+                    apiKey: apiKey,
+                    dangerouslyAllowBrowser: true,
+                });
+            
+                const stream = await openai.chat.completions.create({
+                    model: "gpt-3.5-turbo",
+                    messages: newMessageList.map((item) => ({
+                        role: item.role,
+                        content: item.content,
+                    })),
+                    temperature: 0.7,
+                    top_p: 0.9,
+                    stream: true,
+                });
+            
+                response = "";
+                for await (const chunk of stream) {
+                    response += chunk.choices[0]?.delta?.content || "";
+                    setCurrentAssistantMessage(response);
                 }
-                const reader = data.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let newCurrentAssistantMessage = '';
-                // 循环读取数据
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) {
-                        break;
-                    }
-                    // 处理读取到的数据块
-                    if (value) {
-                        let char = decoder.decode(value);
-                        if (
-                            char === `\n` &&
-                            newCurrentAssistantMessage.endsWith(`\n`)
-                        ) {
-                            continue;
-                        }
-                        if (char) {
-                            newCurrentAssistantMessage += char;
-                            setCurrentAssistantMessage(
-                                newCurrentAssistantMessage
-                            );
-                        }
-                        scrollSmoothThrottle();
-                    }
-                }
-                archiveCurrentMessage(newCurrentAssistantMessage);
+                archiveCurrentMessage(response);
             }
+
+            apiRequestRateLimit.current.requestsThisMinute += 1;
+
+            // if (!response.ok) {
+            //     throw new Error(response.statusText);
+            // }
+
             setLoading(false);
         } catch (error: any) {
             setLoading(false);
             controller.current = null;
-            setServiceErrorMessage(error?.error?.message || 'Service Error');
+            setServiceErrorMessage(error?.message || 'Unknown Service Error');
         }
     };
 

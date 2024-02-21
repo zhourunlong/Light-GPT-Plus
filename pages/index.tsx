@@ -449,8 +449,6 @@ export default function Home() {
         setIsZh(newIsZh);
     };
 
-    const [contextMessageCount, setContextMessageCount] = useState(5);
-
     return (
         <div id="app" className={styles.app} data-theme={theme}>
             <aside
@@ -513,20 +511,6 @@ export default function Home() {
                             <div>{menu.label}</div>
                         </div>
                     ))}
-                    <div className={styles.menu}>
-                        <span>{t('chatBackgroundContext')}</span>
-                        <input
-                            value={contextMessageCount}
-                            onChange={(e) => {
-                                const text = e.target.value;
-                                const count = Number.isNaN(Number(text))
-                                    ? 3
-                                    : Number(text);
-                                setContextMessageCount(count);
-                            }}
-                            type="text"
-                        />
-                    </div>
                 </div>
             </aside>
 

@@ -1,12 +1,6 @@
-import React, { useState, useEffect } from 'react';
-
-// import { useTranslation } from 'react-i18next';
-
-// import { getCurrentApiKeyBilling } from '../../../open.ai.service';
+import React from 'react';
 
 import { Theme } from '../../../interface';
-
-// import { ThemeLocalKey, formatTimestamp } from '../../../utils';
 
 import styles from './index.module.scss';
 

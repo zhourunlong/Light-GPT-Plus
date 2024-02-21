@@ -327,7 +327,7 @@ export default function Home() {
             } else {
                 // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
                 let openai = new OpenAI({
-                    baseURL: `http://192.168.1.2:1234/v1`,
+                    // baseURL: `http://192.168.1.2:1234/v1`, // for local test
                     apiKey: apiKey,
                     dangerouslyAllowBrowser: true,
                 });

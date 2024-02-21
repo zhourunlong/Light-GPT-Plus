@@ -115,7 +115,6 @@ export default function Home() {
         setMessageList(messages);
     }, []);
 
-    const tempCurrentUserMessageId = useRef(uuid());
     const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
     const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
@@ -148,7 +147,10 @@ export default function Home() {
         lastRequestTime: 0,
     });
 
-    const chatGPTTurboWithLatestUserPrompt = async (isRegenerate = false) => {
+    const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo'); // Default model
+
+
+    const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
         // api request rate limit
         const now = Date.now();
         if (now - apiRequestRateLimit.current.lastRequestTime >= 60000) {
@@ -237,7 +239,7 @@ export default function Home() {
                 });
             
                 const stream = await openai.chat.completions.create({
-                    model: "gpt-3.5-turbo",
+                    model: selectedModel,
                     messages: newMessageList.map((item) => ({
                         role: item.role,
                         content: item.content,
@@ -435,6 +437,18 @@ export default function Home() {
                         updateTheme={updateTheme}
                     />
                 </div>
+                <div className={styles.modelSelector}>
+                    <label htmlFor="modelSelect">Choose a model:</label>
+                    <select
+                        id="modelSelect"
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                    >
+                        <option value="gpt-3.5-turbo">GPT-3.5 turbo</option>
+                        <option value="gpt-4">GPT-4</option>
+                    </select>
+                </div>
+
                 <div className={styles.main}>
                     {apiKey ? (
                         <div
@@ -531,7 +545,7 @@ export default function Home() {
                                         className="fas fa-paper-plane"
                                         style={{ transform: 'scale(1.2)' }}
                                         onClick={() =>
-                                            chatGPTTurboWithLatestUserPrompt(
+                                            chatGPTWithLatestUserPrompt(
                                                 false
                                             )
                                         }
@@ -563,7 +577,7 @@ export default function Home() {
                             <div
                                 className={styles.btn}
                                 onClick={() =>
-                                    chatGPTTurboWithLatestUserPrompt(true)
+                                    chatGPTWithLatestUserPrompt(true)
                                 }
                             >
                                 Regenerate

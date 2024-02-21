@@ -75,6 +75,7 @@ const HistoryTopicList: React.FC<{
                         .find((item) => item.role === ERole.user)?.content ||
                     '';
                 const newTopicName = latestUserMessage.slice(0, 10);
+                // TODO: change topic name rule
                 await chatDB.updateTopicNameById(activeTopicId, newTopicName);
                 setHistoryTopicList((list) =>
                     list.map((o) =>

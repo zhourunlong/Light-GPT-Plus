@@ -535,7 +535,6 @@ export default function Home() {
 
                 <div className={styles.header}>
                     <IndexHeader
-                        apiKey={apiKey}
                         theme={theme}
                         updateTheme={updateTheme}
                     />
@@ -663,15 +662,7 @@ export default function Home() {
                                 ref={(e) => {
                                     userPromptRef.current = e;
                                 }}
-                                placeholder={
-                                    loading
-                                        ? 'ai is thinking...'
-                                        : `ask questions or type "img-prompt" to generate img ${
-                                              !isMobile
-                                                  ? ',pressing Enter to submit quickly'
-                                                  : ''
-                                          }`
-                                }
+                                placeholder={`Message Light GPT plus...`}
                                 rows={1}
                                 onKeyDown={(event) => {
                                     // pc desktop
@@ -735,11 +726,7 @@ export default function Home() {
                             </div>
                         </div>
                         <div className={styles.siteDescription}>
-                            <span>Extension by Vector Zhou</span>
-                            <span>｜</span>
-                            <span><a href="https://github.com/riwigefi/light-gpt">Light GPT made by wjm</a></span>
-                            <span>｜</span>
-                            <span>Just have fun</span>
+                            <span>By Vector Zhou</span>
                         </div>
                     </div>
                     <div className={styles.action}>

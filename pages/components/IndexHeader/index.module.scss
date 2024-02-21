@@ -36,7 +36,7 @@
             font-size: 1.6rem;
             font-weight: 800;
             .item {
-                &:last-child {
+                &:nth-last-child(2) {
                     margin-left: 10px;
                     color: transparent;
                     font-weight: 800;
@@ -44,6 +44,17 @@
                         to right,
                         rgba(56, 189, 248),
                         rgba(5, 150, 105)
+                    );
+                    background-clip: text;
+                }
+                &:nth-last-child(1) {
+                    margin-left: 10px;
+                    color: transparent;
+                    font-weight: 800;
+                    background-image: linear-gradient(
+                        to right,
+                        rgb(236, 23, 151),
+                        rgb(182, 10, 226)
                     );
                     background-clip: text;
                 }

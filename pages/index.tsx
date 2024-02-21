@@ -11,10 +11,6 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { v4 as uuid } from 'uuid';
 
-import html2canvas from 'html2canvas';
-
-import html2pdf from 'html2pdf-jspdf2';
-
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import styles from '@/styles/Home.module.scss';
@@ -92,96 +88,6 @@ export default function Home() {
     const [apiKey, setApiKey] = useState('');
 
     const chatHistoryEle = useRef<HTMLDivElement | null>(null);
-
-    const convertToPDF = () => {
-        if (messageList.length === 0) {
-            toast.warn('No question and answer content available', {
-                autoClose: 1000,
-            });
-            return;
-        }
-        setMaskVisible(true);
-        const element = chatHistoryEle.current;
-        if (!element) return;
-
-        const pdfPageWidth = element.clientWidth;
-
-        const pdfPageHeight = element.scrollHeight;
-
-        const opt = {
-            margin: [0, 0, 0, 0],
-            filename: `${new Date().getTime().toFixed(10)}myfile.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                width: pdfPageWidth,
-                height: pdfPageHeight,
-            },
-            jsPDF: {
-                unit: 'pt',
-                format: 'a4',
-                orientation: 'portrait',
-            },
-        };
-        html2pdf().from(element).set(opt).save();
-        setMaskVisible(false);
-    };
-
-    const convertToImage = () => {
-        if (messageList.length === 0) {
-            toast.warn('No question and answer content available', {
-                autoClose: 1000,
-            });
-            return;
-        }
-        setMaskVisible(true);
-        const messageEleList =
-            document.querySelector('#chatHistory')?.childNodes;
-
-        if (!messageEleList) return;
-        if (!messageEleList.length) return;
-        const promises: Promise<HTMLCanvasElement>[] = Array.from(
-            messageEleList
-        ).map((item) => {
-            return html2canvas(item as HTMLElement);
-        });
-
-        Promise.all(promises).then((canvases) => {
-            let canvasWidth = 0,
-                canvasHeight = 0;
-            canvases.forEach((canvas) => {
-                canvasWidth = Math.max(canvasWidth, canvas.width);
-                canvasHeight += canvas.height;
-            });
-
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = canvasWidth;
-            finalCanvas.height = canvasHeight;
-
-            const context = finalCanvas.getContext('2d');
-            if (!context) return;
-
-            let offsetY = 0;
-            canvases.forEach((canvas) => {
-                if (canvas.width > 0) {
-                    context.drawImage(canvas, 0, offsetY);
-                    offsetY += canvas.height - 2;
-                }
-            });
-
-            const imageData = finalCanvas.toDataURL('image/png');
-
-            const blob = dataURItoBlob(imageData);
-
-            const downloadLink = document.createElement('a');
-            downloadLink.href = URL.createObjectURL(blob);
-            downloadLink.download = `${new Date()
-                .getTime()
-                .toFixed(10)}dialog_list.png`;
-
-            downloadLink.click();
-            setMaskVisible(false);
-        });
-    };
 
     const [systemRole, setSystemRole] = useState<IMessage>({
         role: ERole.system,
@@ -605,18 +511,12 @@ export default function Home() {
                                 className={styles.userPrompt}
                                 disabled={loading}
                                 onInput={() => {
-                                    if (
-                                        userPromptRef.current &&
-                                        userPromptRef.current.scrollHeight > 50
-                                    ) {
-                                        userPromptRef.current.style.height =
-                                            userPromptRef.current.scrollHeight +
-                                            2 +
-                                            'px';
+                                    userPromptRef.current!.style.height = 'auto';
+
+                                    if (userPromptRef.current) {
+                                        userPromptRef.current.style.height = userPromptRef.current.scrollHeight + 2 + 'px';
                                     }
-                                    setCurrentUserMessage(
-                                        userPromptRef.current!.value
-                                    );
+
                                     scrollSmoothThrottle();
                                 }}
                                 ref={(e) => {
@@ -624,24 +524,6 @@ export default function Home() {
                                 }}
                                 placeholder={`Message Light GPT plus...`}
                                 rows={1}
-                                onKeyDown={(event) => {
-                                    if (
-                                        event.code === 'Enter' &&
-                                        !event.shiftKey &&
-                                        !event.metaKey &&
-                                        !event.ctrlKey
-                                    ) {
-                                        if (
-                                            windowState.current
-                                                .isUsingComposition
-                                        )
-                                            return;
-                                        chatGPTTurboWithLatestUserPrompt(
-                                            false
-                                        );
-                                        event.preventDefault();
-                                    }
-                                }}
                                 onCompositionStart={() => {
                                     windowState.current.isUsingComposition =
                                         true;
@@ -698,31 +580,6 @@ export default function Home() {
                             </div>
                         )}
                     </div>
-                </div>
-                {/** extra function menus */}
-                <div
-                    className={`${styles.extraFunction} ${
-                        !messageList.length && styles.noMessage
-                    }`}
-                >
-                    <i className="fas fa-image" onClick={convertToImage}></i>
-                    <i
-                        className="fas fa-file-download"
-                        onClick={convertToPDF}
-                    ></i>
-                    <i
-                        className="fas fa-redo-alt"
-                        onClick={() => {
-                            if (messageList.length === 0) {
-                                toast.warn(
-                                    'No question and answer content available',
-                                    { autoClose: 1000 }
-                                );
-                                return;
-                            }
-                            setMessageList([]);
-                        }}
-                    ></i>
                 </div>
             </main>
 
@@ -844,13 +701,6 @@ export default function Home() {
                     )}
                 </div>
             </div>
-
-            {/** 生成图片、pdf的简单loading */}
-            {maskVisible && (
-                <div className={styles.loading}>
-                    <div className={styles.loadingSpinner}></div>
-                </div>
-            )}
         </div>
     );
 }

@@ -20,7 +20,6 @@
         "eventsource-parser": "^0.1.0",
         "highlight.js": "^11.7.0",
         "html2canvas": "^1.4.1",
-        "html2pdf-jspdf2": "^0.1.2",
         "i18next": "^22.4.13",
         "katex": "^0.16.4",
         "lodash": "^4.17.21",

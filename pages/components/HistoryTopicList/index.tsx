@@ -10,6 +10,8 @@ import { ERole, IMessage } from '../../../interface';
 
 import styles from './index.module.scss';
 
+import OpenAI from 'openai';
+
 const chatDB = new ChatService();
 
 const HistoryTopicList: React.FC<{
@@ -17,7 +19,9 @@ const HistoryTopicList: React.FC<{
     currentMessageList: IMessage[];
     updateCurrentMessageList: (messages: IMessage[]) => void;
     activeTopicId: string;
-    changeActiveTopicId: (id: string) => void;
+    updateActiveTopicId: (id: string) => void;
+    topicName: string;
+    updateTopicName: (name: string) => void;
     showMask: () => void;
     hideMask: () => void;
 }> = ({
@@ -25,7 +29,9 @@ const HistoryTopicList: React.FC<{
     currentMessageList,
     updateCurrentMessageList,
     activeTopicId,
-    changeActiveTopicId,
+    updateActiveTopicId,
+    topicName,
+    updateTopicName,
     showMask,
     hideMask,
 }) => {
@@ -35,53 +41,40 @@ const HistoryTopicList: React.FC<{
 
     const generateTopic = () => {
         const topicId = uuid();
-
-        const topicName = `Chat ${topicId.slice(0, 6)}`;
+        const newTopicName = "New chat";
 
         const newTopic = {
             id: topicId,
-            name: topicName,
+            name: newTopicName,
             createdAt: Date.now(),
         };
 
         chatDB.addTopic(newTopic);
         let newHistoryTopicList = historyTopicList.concat([]);
         newHistoryTopicList.unshift(newTopic);
-        setHistoryTopicList(newHistoryTopicList);
-        changeActiveTopicId(topicId);
+
+        updateActiveTopicId(topicId);
         updateCurrentMessageList([]);
+        updateTopicName(newTopicName);
+        
+        setHistoryTopicList(newHistoryTopicList);
     };
 
-    const prevHistoryTopicCount = useRef(0);
-
     useEffect(() => {
-        const updateCurrentTopicNameAfterChat = async () => {
-            if (
-                currentMessageList.length !== 0 &&
-                currentMessageList.length !== prevHistoryTopicCount.current &&
-                activeTopicId
-            ) {
-                const latestUserMessage =
-                    currentMessageList
-                        .slice()
-                        .reverse()
-                        .find((item) => item.role === ERole.user)?.content ||
-                    '';
-                const newTopicName = latestUserMessage.slice(0, 10);
-                // TODO: change topic name rule
-                await chatDB.updateTopicNameById(activeTopicId, newTopicName);
+        const updateCurrentTopicName = async () => {
+            let tempTopicName = topicName.trim().slice(0, 50);
+            if (activeTopicId) {
+                await chatDB.updateTopicNameById(activeTopicId, tempTopicName);
                 setHistoryTopicList((list) =>
                     list.map((o) =>
-                        o.id === activeTopicId
-                            ? { ...o, name: newTopicName }
-                            : o
+                        o.id === activeTopicId ? { ...o, name: tempTopicName } : o
                     )
                 );
-                prevHistoryTopicCount.current = currentMessageList.length;
             }
         };
-        updateCurrentTopicNameAfterChat();
-    }, [currentMessageList, activeTopicId]);
+        updateCurrentTopicName();
+    }, [topicName]);
+
 
     useEffect(() => {
         const init = async () => {
@@ -90,25 +83,25 @@ const HistoryTopicList: React.FC<{
             if (topics.length === 0) {
                 // 生成一个新对话
                 const topicId = uuid();
-
-                const topicName = `Chat ${topicId.slice(0, 6)}`;
+                const newTopicName = "New chat";
 
                 const newTopic = {
                     id: topicId,
-                    name: topicName,
+                    name: newTopicName,
                     createdAt: Date.now(),
                 };
 
                 chatDB.addTopic(newTopic);
                 const newHistoryTopicList = [newTopic];
-                changeActiveTopicId(topicId);
+                updateActiveTopicId(topicId);
                 updateCurrentMessageList([]);
+                updateTopicName(newTopicName);
                 setHistoryTopicList(newHistoryTopicList);
                 return;
             }
 
             setHistoryTopicList(topics);
-            changeActiveTopicId(topics[0].id);
+            updateActiveTopicId(topics[0].id);
 
             showMask();
             // message-list for topic
@@ -120,7 +113,7 @@ const HistoryTopicList: React.FC<{
         };
         init();
     }, [
-        changeActiveTopicId,
+        updateActiveTopicId,
         updateCurrentMessageList,
         hideMask,
         showMask,
@@ -165,7 +158,7 @@ const HistoryTopicList: React.FC<{
                                     isActive && styles.active
                                 } `}
                                 onClick={async () => {
-                                    changeActiveTopicId(item.id);
+                                    updateActiveTopicId(item.id);
 
                                     showMask();
                             
@@ -253,7 +246,7 @@ const HistoryTopicList: React.FC<{
                                                         updateCurrentMessageList(
                                                             []
                                                         );
-                                                        changeActiveTopicId('');
+                                                        updateActiveTopicId('');
                                                         toast.success(
                                                             'Successful deleted topic',
                                                             {

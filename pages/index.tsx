@@ -159,6 +159,12 @@ export default function Home() {
 
     const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
 
+    // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
+    const openai = new OpenAI({
+        // baseURL: `http://192.168.1.2:1234/v1`, // for local test
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true,
+    });
 
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
         // api request rate limit
@@ -171,7 +177,7 @@ export default function Home() {
             apiRequestRateLimit.current.requestsThisMinute >=
             apiRequestRateLimit.current.maxRequestsPerMinute
         ) {
-            toast.warn(`Api Requests are too frequent, try again later! `);
+            toast.warn(`API requests are too frequent, try again later!`);
             return;
         }
 
@@ -199,7 +205,7 @@ export default function Home() {
         } else {
             newMessageList = messageList.concat([]);
 
-            // Add system message
+            // Add system message at the first step
             if (newMessageList.length === 0) {
                 const systemMessageItem = newSystemMessageItem(ChatSystemMessage);
                 newMessageList.push(systemMessageItem);
@@ -218,7 +224,35 @@ export default function Home() {
                     topicId: activeTopicId,
                     ...userMessageItem,
                 });
+
+                // Summarize the sentence in 5 words or fewer for the topic name
+                if (newMessageList.length === 2) {
+                    const response = await openai.chat.completions.create({
+                        model: selectedModel,
+                        messages: [
+                            {
+                                role: ERole.system,
+                                content: SummarizeSystemMessage,
+                            },
+                            {
+                                role: newMessageList[1].role,
+                                content: newMessageList[1].content,
+                            },
+                        ],
+                        temperature: 0.7,
+                        top_p: 0.9,
+                        stream: false,
+                    });
+                    
+                    const tempTopicName = response.choices[0]?.message?.content || "";
+
+                    if (tempTopicName !== '') {
+                        updateTopicName(tempTopicName);
+                    }
+                }
             }
+
+
         }
 
         
@@ -253,14 +287,7 @@ export default function Home() {
                 setTimeout(() => {
                     scrollSmoothThrottle();
                 }, 2000);
-            } else {
-                // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
-                let openai = new OpenAI({
-                    baseURL: `http://192.168.1.2:1234/v1`, // for local test
-                    apiKey: apiKey,
-                    dangerouslyAllowBrowser: true,
-                });
-            
+            } else {            
                 const stream = await openai.chat.completions.create({
                     model: selectedModel,
                     messages: newMessageList.map((item) => ({
@@ -317,8 +344,13 @@ export default function Home() {
     const userAvatar = '/user.jpeg';
 
     const [activeTopicId, setActiveTopicId] = useState('');
-    const changeActiveTopicId = useCallback((id: string) => {
+    const updateActiveTopicId = useCallback((id: string) => {
         setActiveTopicId(id);
+    }, []);
+
+    const [topicName, setTopicName] = useState('');
+    const updateTopicName = useCallback((name: string) => {
+        setTopicName(name);
     }, []);
 
     useEffect(() => {
@@ -373,7 +405,9 @@ export default function Home() {
                         currentMessageList={messageList}
                         updateCurrentMessageList={updateCurrentMessageList}
                         activeTopicId={activeTopicId}
-                        changeActiveTopicId={changeActiveTopicId}
+                        updateActiveTopicId={updateActiveTopicId}
+                        topicName={topicName}
+                        updateTopicName={updateTopicName}
                         showMask={showMask}
                         hideMask={hideMask}
                     />

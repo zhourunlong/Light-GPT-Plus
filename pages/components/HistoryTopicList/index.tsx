@@ -9,7 +9,6 @@ import { ChatService } from '../../../db';
 import { ERole, IMessage } from '../../../interface';
 
 import styles from './index.module.scss';
-import { DefaultSystemRole } from '@/utils';
 
 const chatDB = new ChatService();
 
@@ -21,8 +20,6 @@ const HistoryTopicList: React.FC<{
     changeActiveTopicId: (id: string) => void;
     showMask: () => void;
     hideMask: () => void;
-    currentSystemRole: string;
-    updateCurrentSystemRole: (content: string) => void;
 }> = ({
     historyTopicListVisible,
     currentMessageList,
@@ -31,11 +28,9 @@ const HistoryTopicList: React.FC<{
     changeActiveTopicId,
     showMask,
     hideMask,
-    currentSystemRole,
-    updateCurrentSystemRole,
 }) => {
     const [historyTopicList, setHistoryTopicList] = useState<
-        { id: string; name: string; systemRole: string }[]
+        { id: string; name: string; createdAt: number}[]
     >([]);
 
     const generateTopic = () => {
@@ -47,11 +42,9 @@ const HistoryTopicList: React.FC<{
             id: topicId,
             name: topicName,
             createdAt: Date.now(),
-            systemRole: DefaultSystemRole,
         };
 
         chatDB.addTopic(newTopic);
-        updateCurrentSystemRole(DefaultSystemRole);
         let newHistoryTopicList = historyTopicList.concat([]);
         newHistoryTopicList.unshift(newTopic);
         setHistoryTopicList(newHistoryTopicList);
@@ -104,7 +97,6 @@ const HistoryTopicList: React.FC<{
                     id: topicId,
                     name: topicName,
                     createdAt: Date.now(),
-                    systemRole: DefaultSystemRole,
                 };
 
                 chatDB.addTopic(newTopic);
@@ -117,7 +109,6 @@ const HistoryTopicList: React.FC<{
 
             setHistoryTopicList(topics);
             changeActiveTopicId(topics[0].id);
-            updateCurrentSystemRole(topics[0].systemRole);
 
             showMask();
             // message-list for topic
@@ -133,7 +124,6 @@ const HistoryTopicList: React.FC<{
         updateCurrentMessageList,
         hideMask,
         showMask,
-        updateCurrentSystemRole,
     ]);
 
     const [editingTopicName, setEditingTopicName] = useState(false);
@@ -177,10 +167,8 @@ const HistoryTopicList: React.FC<{
                                 onClick={async () => {
                                     changeActiveTopicId(item.id);
 
-                                    updateCurrentSystemRole(item.systemRole);
-
                                     showMask();
-                                    // 找出点击的主题的历史对话
+                            
                                     const currentMessageList =
                                         await chatDB.getConversationsByTopicId(
                                             item.id

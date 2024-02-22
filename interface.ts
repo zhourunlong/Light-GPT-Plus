@@ -14,6 +14,5 @@ export interface IMessage {
 export type Theme = 'light' | 'dark';
 
 export enum SystemSettingMenu {
-    systemRoleSettings = 'systemRoleSettings',
     apiKeySettings = 'apiKeySettings',
 }

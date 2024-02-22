@@ -3,7 +3,6 @@ import Dexie from 'dexie';
 interface Topic {
     id: string;
     name: string;
-    systemRole: string; // 新增加的属性
     createdAt: number;
 }
 
@@ -23,7 +22,7 @@ class ChatDatabase extends Dexie {
         super('ChatDatabase');
 
         this.version(2).stores({
-            topics: 'id, name, createdAt, systemRole', // 更新 topics 表结构
+            topics: 'id, name, createdAt', // 更新 topics 表结构
             conversations: 'id, role, content, topicId, createdAt',
         });
 
@@ -41,6 +40,7 @@ export class ChatService {
 
     async getTopics(): Promise<Topic[]> {
         const topics = await this.db.topics.toArray();
+        // TODO: maybe related to regenerate
         topics.sort((a, b) => b.createdAt - a.createdAt);
         return topics;
     }
@@ -77,12 +77,5 @@ export class ChatService {
 
     async updateTopicNameById(topicId: string, name: string): Promise<void> {
         await this.db.topics.update(topicId, { name });
-    }
-
-    async updateTopicSystemRoleById(
-        topicId: string,
-        systemRole: string
-    ): Promise<void> {
-        await this.db.topics.update(topicId, { systemRole });
     }
 }

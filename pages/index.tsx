@@ -35,10 +35,10 @@ import {
     dataURItoBlob,
     ThemeLocalKey,
     APIKeyLocalKey,
-    GenerateImagePromptPrefix,
     encryptApiKey,
     decryptApiKey,
-    DefaultSystemRole,
+    ChatSystemMessage,
+    SummarizeSystemMessage
 } from '../utils';
 
 const chatDB = new ChatService();
@@ -78,8 +78,6 @@ export default function Home() {
         setMaskVisible(false);
     }, []);
 
-    const [tempSystemRoleValue, setTempSystemRoleValue] = useState('');
-
     const [activeSystemMenu, setActiveSystemMenu] = useState<
         SystemSettingMenu | ''
     >('');
@@ -89,20 +87,32 @@ export default function Home() {
 
     const chatHistoryEle = useRef<HTMLDivElement | null>(null);
 
-    const [systemRole, setSystemRole] = useState<IMessage>({
-        role: ERole.system,
-        content: DefaultSystemRole,
-        id: uuid(),
-        createdAt: Date.now(),
-    });
+    function newSystemMessageItem(systemMessage: string): IMessage {
+        return {
+          role: ERole.system,
+          content: systemMessage,
+          id: uuid(),
+          createdAt: Date.now(),
+        };
+    }
 
-    const updateCurrentSystemRole = useCallback((newSystemRole: string) => {
-        setSystemRole((info) => ({
-            ...info,
-            content: newSystemRole,
-        }));
-        setTempSystemRoleValue(newSystemRole);
-    }, []);
+    function newUserMessageItem(userMessage: string): IMessage {
+        return {
+          role: ERole.user,
+          content: userMessage,
+          id: uuid(),
+          createdAt: Date.now(),
+        };
+    }
+
+    function newAssistantMessageItem(assistantMessage: string): IMessage {
+        return {
+          role: ERole.assistant,
+          content: assistantMessage,
+          id: uuid(),
+          createdAt: Date.now(),
+        };
+    }
 
     const [messageList, setMessageList] = useState<IMessage[]>([]);
 
@@ -147,7 +157,7 @@ export default function Home() {
         lastRequestTime: 0,
     });
 
-    const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo'); // Default model
+    const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
 
 
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
@@ -180,27 +190,38 @@ export default function Home() {
             return;
         }
 
+        // TODO: messageList may display previous messages before regenerate
+
         let newMessageList = [];
         if (isRegenerate) {
             // Delete the last assistant message
             newMessageList = messageList.slice(0, -1).concat([]);
         } else {
             newMessageList = messageList.concat([]);
-            const newUserMessage = {
-                role: ERole.user,
-                content: currentUserMessage,
-                id: uuid(),
-                createdAt: Date.now(),
-            };
-            newMessageList.push(newUserMessage);
+
+            // Add system message
+            if (newMessageList.length === 0) {
+                const systemMessageItem = newSystemMessageItem(ChatSystemMessage);
+                newMessageList.push(systemMessageItem);
+                if (activeTopicId) {
+                    await chatDB.addConversation({
+                        topicId: activeTopicId,
+                        ...systemMessageItem,
+                    });
+                }
+            }
+
+            const userMessageItem = newUserMessageItem(currentUserMessage);
+            newMessageList.push(userMessageItem);
             if (activeTopicId) {
-                // 更新
                 await chatDB.addConversation({
                     topicId: activeTopicId,
-                    ...newUserMessage,
+                    ...userMessageItem,
                 });
             }
         }
+
+        
 
         setMessageList(newMessageList);
         userPromptRef.current!.value = '';
@@ -209,7 +230,9 @@ export default function Home() {
         scrollSmoothThrottle();
 
         const prompt = newMessageList[newMessageList.length - 1].content;
-        const isGenerateImage = prompt.startsWith(GenerateImagePromptPrefix);
+        
+        // TODO: support image generation
+        const isGenerateImage = false;
 
         // get response
         try {
@@ -233,7 +256,7 @@ export default function Home() {
             } else {
                 // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
                 let openai = new OpenAI({
-                    // baseURL: `http://192.168.1.2:1234/v1`, // for local test
+                    baseURL: `http://192.168.1.2:1234/v1`, // for local test
                     apiKey: apiKey,
                     dangerouslyAllowBrowser: true,
                 });
@@ -273,18 +296,13 @@ export default function Home() {
 
     const archiveCurrentMessage = (newCurrentAssistantMessage: string) => {
         if (newCurrentAssistantMessage) {
-            const newAssistantMessage = {
-                role: ERole.assistant,
-                content: newCurrentAssistantMessage,
-                id: uuid(),
-                createdAt: Date.now(),
-            };
-            setMessageList((list) => list.concat([newAssistantMessage]));
+            const assistantMessageItem = newAssistantMessageItem(newCurrentAssistantMessage);
+            setMessageList((list) => list.concat([assistantMessageItem]));
             if (activeTopicId) {
                 // 更新
                 chatDB.addConversation({
                     topicId: activeTopicId,
-                    ...newAssistantMessage,
+                    ...assistantMessageItem,
                 });
             }
             setLoading(false);
@@ -328,11 +346,6 @@ export default function Home() {
 
     const SystemMenus = [
         {
-            label: t('systemRoleSettings'),
-            iconName: 'fa-id-badge',
-            value: SystemSettingMenu.systemRoleSettings,
-        },
-        {
             label: t('apiKeySettings'),
             iconName: 'fa-key',
             value: SystemSettingMenu.apiKeySettings,
@@ -363,8 +376,6 @@ export default function Home() {
                         changeActiveTopicId={changeActiveTopicId}
                         showMask={showMask}
                         hideMask={hideMask}
-                        currentSystemRole={systemRole.content}
-                        updateCurrentSystemRole={updateCurrentSystemRole}
                     />
                 </div>
 
@@ -589,62 +600,6 @@ export default function Home() {
                             setActiveSystemMenu('');
                         }}
                     ></i>
-                    {activeSystemMenu ===
-                        SystemSettingMenu.systemRoleSettings && (
-                        <div className={styles.systemRoleSettings}>
-                            <label htmlFor="systemRole">System Role</label>
-                            <textarea
-                                placeholder="Enter system role here"
-                                id="systemRole"
-                                value={tempSystemRoleValue}
-                                rows={4}
-                                onChange={(e) => {
-                                    setTempSystemRoleValue(e.target.value);
-                                }}
-                            ></textarea>
-
-                            <div className={styles.description}>
-                                {t('systemRoleDescription')}
-                            </div>
-
-                            <div className={styles.benefits}>
-                                {t('systemRoleHelp')}
-                                <Link
-                                    href="https://github.com/f/awesome-chatgpt-prompts"
-                                    target="_blank"
-                                >
-                                    Awesome ChatGPT Prompts
-                                </Link>{' '}
-                            </div>
-                            <div className={styles.btnContainer}>
-                                <button
-                                    className={styles.saveButton}
-                                    onClick={async () => {
-                                        setActiveSystemMenu('');
-
-                                        setSystemRole({
-                                            role: ERole.system,
-                                            content: tempSystemRoleValue,
-                                            id: uuid(),
-                                            createdAt: systemRole.createdAt,
-                                        });
-                                        if (activeTopicId) {
-                                            // 更新当前主题的系统设置
-                                            await chatDB.updateTopicSystemRoleById(
-                                                activeTopicId,
-                                                tempSystemRoleValue
-                                            );
-                                        }
-                                        toast.success('Successful update', {
-                                            autoClose: 1000,
-                                        });
-                                    }}
-                                >
-                                    {t('save')}
-                                </button>
-                            </div>
-                        </div>
-                    )}
                     {activeSystemMenu === SystemSettingMenu.apiKeySettings && (
                         <div className={styles.systemRoleSettings}>
                             <label htmlFor="apiKey">Open AI API Key</label>

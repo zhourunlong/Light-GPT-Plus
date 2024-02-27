@@ -20,26 +20,6 @@ import { ERole } from '../../../interface';
 
 import styles from './index.module.scss';
 
-export const testMd = `
-# My Markdown Document
-
-Here is some code:
-
-\`\`\`js
-const greet = (name) => {
-  console.log(\`Hello, \${name}!\`);
-};
-
-greet('World');
-\`\`\`
-
-Here is a math formula:
-
-$$
-\\sum_{i=1}^n i^2 = \\frac{n(n+1)(2n+1)}{6}
-$$
-`;
-
 Highlightjs.registerLanguage('regex', regex);
 
 const MessageItem: React.FC<{
@@ -74,7 +54,6 @@ const MessageItem: React.FC<{
         ${rawCode}
         </div>`;
         };
-        // return md.render(testMd);
         return md.render(message || '');
     };
 

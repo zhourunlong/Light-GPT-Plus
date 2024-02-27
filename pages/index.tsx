@@ -243,7 +243,7 @@ export default function Home() {
                     const tempTopicName = response.choices[0]?.message?.content || "";
 
                     if (tempTopicName !== '') {
-                        updateTopicName(tempTopicName);
+                        updateActiveTopicName(tempTopicName);
                     }
                 }
             }
@@ -340,9 +340,9 @@ export default function Home() {
         setActiveTopicId(id);
     }, []);
 
-    const [topicName, setTopicName] = useState('');
-    const updateTopicName = useCallback((name: string) => {
-        setTopicName(name);
+    const [activeTopicName, setActiveTopicName] = useState('');
+    const updateActiveTopicName = useCallback((name: string) => {
+        setActiveTopicName(name);
     }, []);
 
     useEffect(() => {
@@ -376,14 +376,6 @@ export default function Home() {
         },
     ];
 
-    const [isZh, setIsZh] = useState(true);
-
-    const changeLanguage = () => {
-        const newIsZh = !isZh;
-        i18n.changeLanguage(newIsZh ? 'zh' : 'en');
-        setIsZh(newIsZh);
-    };
-
     return (
         <div id="app" className={styles.app} data-theme={theme}>
             <aside
@@ -398,8 +390,8 @@ export default function Home() {
                         updateCurrentMessageList={updateCurrentMessageList}
                         activeTopicId={activeTopicId}
                         updateActiveTopicId={updateActiveTopicId}
-                        topicName={topicName}
-                        updateTopicName={updateTopicName}
+                        activeTopicName={activeTopicName}
+                        updateActiveTopicName={updateActiveTopicName}
                         showMask={showMask}
                         hideMask={hideMask}
                     />
@@ -429,10 +421,6 @@ export default function Home() {
                                 ? t('changeLightMode')
                                 : t('changeDarkMode')}
                         </div>
-                    </div>
-                    <div className={styles.menu} onClick={changeLanguage}>
-                        <i className={`fas fa-language`}></i>
-                        <div>{t('changeLanguage')}</div>
                     </div>
                     {SystemMenus.map((menu) => (
                         <div

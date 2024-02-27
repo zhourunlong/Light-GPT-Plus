@@ -4,11 +4,9 @@ import { v4 as uuid } from 'uuid';
 
 import { ChatService } from '../../../db';
 
-import { ERole, IMessage } from '../../../interface';
+import { IMessage } from '../../../interface';
 
 import styles from './index.module.scss';
-
-import OpenAI from 'openai';
 
 const chatDB = new ChatService();
 
@@ -18,8 +16,8 @@ const HistoryTopicList: React.FC<{
     updateCurrentMessageList: (messages: IMessage[]) => void;
     activeTopicId: string;
     updateActiveTopicId: (id: string) => void;
-    topicName: string;
-    updateTopicName: (name: string) => void;
+    activeTopicName: string;
+    updateActiveTopicName: (name: string) => void;
     showMask: () => void;
     hideMask: () => void;
 }> = ({
@@ -28,8 +26,8 @@ const HistoryTopicList: React.FC<{
     updateCurrentMessageList,
     activeTopicId,
     updateActiveTopicId,
-    topicName,
-    updateTopicName,
+    activeTopicName,
+    updateActiveTopicName,
     showMask,
     hideMask,
 }) => {
@@ -53,14 +51,14 @@ const HistoryTopicList: React.FC<{
 
         updateActiveTopicId(topicId);
         updateCurrentMessageList([]);
-        updateTopicName(newTopicName);
+        updateActiveTopicName(newTopicName);
         
         setHistoryTopicList(newHistoryTopicList);
     };
 
     useEffect(() => {
         const updateCurrentTopicName = async () => {
-            let tempTopicName = topicName.trim().slice(0, 50);
+            let tempTopicName = activeTopicName.trim().slice(0, 50);
             if (activeTopicId) {
                 await chatDB.updateTopicNameById(activeTopicId, tempTopicName);
                 setHistoryTopicList((list) =>
@@ -71,7 +69,7 @@ const HistoryTopicList: React.FC<{
             }
         };
         updateCurrentTopicName();
-    }, [topicName]);
+    }, [activeTopicName]);
 
 
     useEffect(() => {
@@ -93,7 +91,7 @@ const HistoryTopicList: React.FC<{
                 const newHistoryTopicList = [newTopic];
                 updateActiveTopicId(topicId);
                 updateCurrentMessageList([]);
-                updateTopicName(newTopicName);
+                updateActiveTopicName(newTopicName);
                 setHistoryTopicList(newHistoryTopicList);
                 return;
             }

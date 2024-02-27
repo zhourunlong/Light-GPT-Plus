@@ -18,7 +18,7 @@ The functionality is Plus, while being "Plus"ly light-weight.
 - System message
   - In the original Light-GPT, the system message (named `systemRoles`) was never actually sent to OpenAI api. Now this bug is fixed.
 - Conversation display
-  - [TODO] In the original Light-GPT, reopening the topic tab after multiple regeneration displayed all the assistant messages.
+  - In the original Light-GPT, reopening the topic tab after multiple regeneration displayed all the assistant messages. Now this bug is fixed.
 ### Small
 - Text input
   - In the original Light-GPT, deleting the lengthy input text will not shrink the text input area. Now this bug is fixed.

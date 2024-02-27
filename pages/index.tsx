@@ -196,7 +196,8 @@ export default function Home() {
         let newMessageList = [];
         if (isRegenerate) {
             // Delete the last assistant message
-            newMessageList = messageList.slice(0, -1).concat([]);
+            removeMessageById(messageList[messageList.length - 1].id);
+            newMessageList = messageList.concat([]);
         } else {
             newMessageList = messageList.concat([]);
 
@@ -246,11 +247,7 @@ export default function Home() {
                     }
                 }
             }
-
-
         }
-
-        
 
         setMessageList(newMessageList);
         userPromptRef.current!.value = '';
@@ -554,7 +551,7 @@ export default function Home() {
                                 ref={(e) => {
                                     userPromptRef.current = e;
                                 }}
-                                placeholder={`Message Light GPT plus...`}
+                                placeholder={`Message Light GPT Plus...`}
                                 rows={1}
                                 onCompositionStart={() => {
                                     windowState.current.isUsingComposition =

@@ -37,14 +37,20 @@
     .assistant {
         margin-right: 20px;
     }
-    .content {
+    .userMainContent {
+        display: flex;
         flex: 1;
-        min-height: 40px;
-        border-radius: 12px;
-        padding: 20px 20px;
-        border: 1px solid var(--border-color);
-        color: var(--text-color-normal);
-        overflow-y: hidden;
+        flex-direction: column;
+
+        .content {
+            flex: 1;
+            min-height: 40px;
+            border-radius: 12px;
+            padding: 20px 20px;
+            border: 1px solid var(--border-color);
+            color: var(--text-color-normal);
+            overflow-y: hidden;
+        }
     }
     .htmlContent {
         flex: 1;

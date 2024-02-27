@@ -19,6 +19,7 @@ import 'katex/dist/katex.min.css';
 import { ERole } from '../../../interface';
 
 import styles from './index.module.scss';
+import globalStyles from '../../../styles/Home.module.scss';
 import { set } from 'lodash';
 
 Highlightjs.registerLanguage('regex', regex);
@@ -146,15 +147,31 @@ const MessageItem: React.FC<{
                         }}
                     ></div>
 
-                    {editingMessage ?
-                        <MessageEditor
-                            tempMessage={tempMessage}
-                            updateTempMessage={updateTempMessage}
-                        /> : (
-                        <div className={styles.content}>{message}</div>
-                    )}
-                    
+                    <div className={styles.userMainContent}>
+                        {editingMessage ?
+                            <MessageEditor
+                                tempMessage={tempMessage}
+                                updateTempMessage={updateTempMessage}
+                            /> : (
+                            <div className={styles.content}>{message}</div>
+                        )}
 
+                        {editingMessage ?
+                            (<div className={globalStyles.buttonContainer}>
+                                <button className={globalStyles.saveButton} 
+                                    onClick={() => {/* handle submit action */}}
+                                >
+                                    Save & Submit
+                                </button>
+                                <button className={globalStyles.cancelButton} 
+                                    onClick={() => {/* handle cancel action */}}
+                                >
+                                    Cancel
+                                </button>
+                             </div>): <div></div>
+                        }
+                    </div>
+                        
                     <div className={`${styles.user} ${styles.avatar}`}>
                         <Image
                             className={styles.img}
@@ -164,6 +181,7 @@ const MessageItem: React.FC<{
                             alt="user"
                         />
                     </div>
+
                 </>
             ) : (
                 <>

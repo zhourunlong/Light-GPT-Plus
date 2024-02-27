@@ -572,28 +572,32 @@ export default function Home() {
                     </div>
                     <div className={styles.action}>
                         {loading ? (
-                            <div
-                                className={styles.btn}
-                                onClick={() => {
-                                    if (controller.current) {
-                                        controller.current.abort();
-                                        setLoading(false);
-                                        archiveCurrentMessage(
-                                            currentAssistantMessage
-                                        );
-                                    }
-                                }}
-                            >
-                                Stop
+                            <div className={styles.buttonContainer}>
+                                <div
+                                    className={styles.button}
+                                    onClick={() => {
+                                        if (controller.current) {
+                                            controller.current.abort();
+                                            setLoading(false);
+                                            archiveCurrentMessage(
+                                                currentAssistantMessage
+                                            );
+                                        }
+                                    }}
+                                >
+                                    Stop
+                                </div>
                             </div>
                         ) : (
-                            <div
-                                className={styles.btn}
-                                onClick={() =>
-                                    chatGPTWithLatestUserPrompt(true)
-                                }
-                            >
-                                Regenerate
+                            <div className={styles.buttonContainer}>
+                                <div
+                                    className={styles.button}
+                                    onClick={() =>
+                                        chatGPTWithLatestUserPrompt(true)
+                                    }
+                                >
+                                    Regenerate
+                                </div>
                             </div>
                         )}
                     </div>
@@ -637,7 +641,7 @@ export default function Home() {
                                     Open AI Platform API KEYS
                                 </Link>{' '}
                             </div>
-                            <div className={styles.btnContainer}>
+                            <div className={styles.buttonContainer}>
                                 <button
                                     className={styles.saveButton}
                                     onClick={() => {

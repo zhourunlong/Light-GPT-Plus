@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-import { toast } from 'react-toastify';
-
 import { v4 as uuid } from 'uuid';
 
 import { ChatService } from '../../../db';
@@ -224,12 +222,6 @@ const HistoryTopicList: React.FC<{
                                                                         : o
                                                                 )
                                                         );
-                                                        toast.success(
-                                                            'Update Topic Name Successful',
-                                                            {
-                                                                autoClose: 1000,
-                                                            }
-                                                        );
                                                     }
                                                     if (removingTopic) {
                                                         await chatDB.deleteTopicById(
@@ -245,13 +237,6 @@ const HistoryTopicList: React.FC<{
                                                         );
                                                         updateCurrentMessageList(
                                                             []
-                                                        );
-                                                        updateActiveTopicId('');
-                                                        toast.success(
-                                                            'Successful deleted topic',
-                                                            {
-                                                                autoClose: 1000,
-                                                            }
                                                         );
                                                     }
                                                     setEditingTopicName(false);

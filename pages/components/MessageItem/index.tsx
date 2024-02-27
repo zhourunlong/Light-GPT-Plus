@@ -2,8 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 import Image from 'next/image';
 
-import { toast } from 'react-toastify';
-
 import MarkdownIt from 'markdown-it';
 
 import MdHighlight from 'markdown-it-highlightjs';
@@ -94,9 +92,6 @@ const MessageItem: React.FC<{
             // 创建一个新的ClipboardItem对象
             navigator.clipboard
                 .writeText(code)
-                .then(() => {
-                    toast.success('code copied', { autoClose: 1000 });
-                })
                 .catch((err) => {
                     // console.error('写入剪贴板失败：', err)
                 });

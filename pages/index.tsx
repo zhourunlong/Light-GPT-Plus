@@ -6,9 +6,6 @@ import { throttle } from 'lodash';
 
 import { useTranslation } from 'react-i18next';
 
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
 import { v4 as uuid } from 'uuid';
 
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -177,14 +174,12 @@ export default function Home() {
             apiRequestRateLimit.current.requestsThisMinute >=
             apiRequestRateLimit.current.maxRequestsPerMinute
         ) {
-            toast.warn(`API requests are too frequent, try again later!`);
+            setServiceErrorMessage('API requests too frequent, try again later!');
             return;
         }
 
         if (!apiKey) {
-            toast.error('Please set API KEY', {
-                autoClose: 1000,
-            });
+            setServiceErrorMessage('Please set API KEY');
             setActiveSystemMenu(SystemSettingMenu.apiKeySettings);
             return;
         }
@@ -192,7 +187,7 @@ export default function Home() {
         // 先把用户输入信息展示到对话列表
         const currentUserMessage = userPromptRef.current?.value || '';
         if (!isRegenerate && !currentUserMessage) {
-            toast.warn('Please enter your question', { autoClose: 1000 });
+            setServiceErrorMessage('Please enter your question!');
             return;
         }
 
@@ -474,8 +469,6 @@ export default function Home() {
 
                 <HeadMeatSetup></HeadMeatSetup>
 
-                <ToastContainer></ToastContainer>
-
                 <div className={styles.header}>
                     <IndexHeader
                         theme={theme}
@@ -672,9 +665,6 @@ export default function Home() {
                                             APIKeyLocalKey,
                                             encryptedApiKey
                                         );
-                                        toast.success('Successful update', {
-                                            autoClose: 1000,
-                                        });
                                     }}
                                 >
                                     {t('save')}

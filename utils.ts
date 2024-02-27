@@ -102,6 +102,11 @@ export const formatTimestamp = (timestamp: number) => {
 export const ThemeLocalKey = 'light_gpt_theme';
 export const APIKeyLocalKey = 'light_gpt_api_key';
 
-export const ChatSystemMessage = `You are a versatile expert, please answer each of my questions in a simple and easy-to-understand way as much as possible`;
+// TODO: Modify the system message like below, with fillable model name and current data.
+
+// You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Knowledge cutoff: 2022-01 Current date: 2024-02-22
+
+
+export const ChatSystemMessage = `You are ChatGPT, a versatile expert, please answer each of my questions in a simple and easy-to-understand way as much as possible`;
 
 export const SummarizeSystemMessage = "You are a helpful assistant assigned with the task: summarize the sentence in 5 words or fewer. Be as concise as possible."

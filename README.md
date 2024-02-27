@@ -9,7 +9,6 @@ The functionality is Plus, while being "Plus"ly light-weight.
   - On the top left corner, there is a drop down box to select models. Now support `GPT-4 Turbo`, `GPT-4` and `GPT-3.5 Turbo`.
 - Conversations
   - Now the topic names of conversations are summarizations of the first user message as in ChatGPT, instead of simply the first 10 or so letters of the user message as in the original Light-GPT.
-  - [TODO] Support of clearing all conversations.
 - Text input
   - [TODO] Support of editing user messages.
 
@@ -19,6 +18,7 @@ The functionality is Plus, while being "Plus"ly light-weight.
   - In the original Light-GPT, the system message (named `systemRoles`) was never actually sent to OpenAI api. Now this bug is fixed.
 - Conversation display
   - In the original Light-GPT, reopening the topic tab after multiple regeneration displayed all the assistant messages. Now this bug is fixed.
+  - [TODO] Math equation rendering bug: $x^2$ -> $x_2$.
 ### Small
 - Text input
   - In the original Light-GPT, deleting the lengthy input text will not shrink the text input area. Now this bug is fixed.
@@ -40,3 +40,5 @@ The functionality is Plus, while being "Plus"ly light-weight.
   - Remove the support to send text by pressing <kbd>Enter</kbd>.
 - Toastify JS
   - Remove Toastify JS notifications.
+- Language support
+  - Remove language support. Now only supports English.

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -19,8 +19,44 @@ import 'katex/dist/katex.min.css';
 import { ERole } from '../../../interface';
 
 import styles from './index.module.scss';
+import { set } from 'lodash';
 
 Highlightjs.registerLanguage('regex', regex);
+
+const MessageEditor: React.FC<{
+    tempMessage: string;
+    updateTempMessage: (msg: string) => void;
+}> = ({ tempMessage, updateTempMessage }) => {
+    const editMessageRef = useRef<HTMLTextAreaElement | null>(null);
+
+    // Function to adjust the textarea height
+    const adjustHeight = () => {
+        const textarea = editMessageRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto'; // Reset the height to ensure accurate scrollHeight measurement
+            textarea.style.height = `${textarea.scrollHeight+2}px`;
+        }
+    };
+
+    // Adjust the height on mount and whenever tempMessage changes
+    useEffect(() => {
+        adjustHeight();
+    }, [tempMessage]);
+
+    return (
+        <textarea
+            className={styles.content}
+            value={tempMessage}
+            rows={1}
+            onChange={(e) => {
+                updateTempMessage(e.target.value);
+                adjustHeight();
+            }}
+            ref={editMessageRef}
+            style={{ boxSizing: 'border-box' }}
+        />
+    );
+}
 
 const MessageItem: React.FC<{
     id: string;
@@ -34,6 +70,12 @@ const MessageItem: React.FC<{
     );
 
     const currentMessageEle = useRef<HTMLDivElement | null>(null);
+
+    const [editingMessage, setEditingMessage] = useState(false);
+    const [tempMessage, setTempMessage] = useState('');
+    const updateTempMessage = useCallback((msg: string) => {
+        setTempMessage(msg);
+    }, []);
 
     const htmlString = () => {
         const md = MarkdownIt()
@@ -92,22 +134,26 @@ const MessageItem: React.FC<{
             className={styles.message}
             ref={(ele) => (currentMessageEle.current = ele)}
         >
-            <i
-                className={`fas fa-trash-alt ${styles.removeMessage}`}
-                onClick={() => {
-                    removeMessageById?.(id);
-                }}
-            ></i>
             {role === ERole.user ? (
                 <>
                     <div className={styles.placeholder}></div>
 
                     <div
-                        className={styles.content}
-                        dangerouslySetInnerHTML={{
-                            __html: htmlString(),
+                        className={`fa-solid fa-pencil ${styles.editMessage}`}
+                        onClick={() => {
+                            setEditingMessage(true);
+                            setTempMessage(message);
                         }}
                     ></div>
+
+                    {editingMessage ?
+                        <MessageEditor
+                            tempMessage={tempMessage}
+                            updateTempMessage={updateTempMessage}
+                        /> : (
+                        <div className={styles.content}>{message}</div>
+                    )}
+                    
 
                     <div className={`${styles.user} ${styles.avatar}`}>
                         <Image
@@ -143,7 +189,7 @@ const MessageItem: React.FC<{
                         </div>
                     ) : (
                         <div
-                            className={styles.content}
+                            className={styles.htmlContent}
                             dangerouslySetInnerHTML={{
                                 __html: htmlString(),
                             }}

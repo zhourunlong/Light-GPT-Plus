@@ -14,7 +14,7 @@ import styles from '@/styles/Home.module.scss';
 
 import IndexHeader from './components/IndexHeader';
 
-import HeadMeatSetup from './components/HeadMetaSetup';
+import HeadMetaSetup from './components/HeadMetaSetup';
 
 import MessageItem from './components/MessageItem';
 
@@ -452,7 +452,7 @@ export default function Home() {
                     )}
                 </div>
 
-                <HeadMeatSetup></HeadMeatSetup>
+                <HeadMetaSetup></HeadMetaSetup>
 
                 <div className={styles.header}>
                     <IndexHeader

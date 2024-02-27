@@ -7,7 +7,7 @@
     background-color: var(--body-bg);
     box-sizing: border-box;
     position: relative;
-    .removeMessage {
+    .editMessage {
         position: absolute;
         top: 30px;
         right: 90px;
@@ -15,7 +15,7 @@
         color: var(--text-color-normal);
     }
     &:hover {
-        .removeMessage {
+        .editMessage {
             transform: scale(0.8);
         }
     }
@@ -41,7 +41,16 @@
         flex: 1;
         min-height: 40px;
         border-radius: 12px;
-        padding: 0 20px;
+        padding: 20px 20px;
+        border: 1px solid var(--border-color);
+        color: var(--text-color-normal);
+        overflow-y: hidden;
+    }
+    .htmlContent {
+        flex: 1;
+        min-height: 40px;
+        border-radius: 12px;
+        padding: 4px 20px;
         border: 1px solid var(--border-color);
         color: var(--text-color-normal);
     }

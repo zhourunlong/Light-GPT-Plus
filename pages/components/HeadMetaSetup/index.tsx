@@ -1,6 +1,6 @@
 import Head from 'next/head';
 
-const HeadMeatSetup = () => {
+const HeadMetaSetup = () => {
     return (
         <Head>
             <meta
@@ -21,4 +21,4 @@ const HeadMeatSetup = () => {
     );
 };
 
-export default HeadMeatSetup;
+export default HeadMetaSetup;

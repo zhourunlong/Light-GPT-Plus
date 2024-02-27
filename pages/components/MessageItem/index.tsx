@@ -25,9 +25,11 @@ import { set } from 'lodash';
 Highlightjs.registerLanguage('regex', regex);
 
 const MessageEditor: React.FC<{
+    editingMessage: boolean;
+    updateEditingMessage: (editing: boolean) => void;
     tempMessage: string;
     updateTempMessage: (msg: string) => void;
-}> = ({ tempMessage, updateTempMessage }) => {
+}> = ({ editingMessage, updateEditingMessage, tempMessage, updateTempMessage }) => {
     const editMessageRef = useRef<HTMLTextAreaElement | null>(null);
 
     // Function to adjust the textarea height
@@ -45,17 +47,31 @@ const MessageEditor: React.FC<{
     }, [tempMessage]);
 
     return (
-        <textarea
-            className={styles.content}
-            value={tempMessage}
-            rows={1}
-            onChange={(e) => {
-                updateTempMessage(e.target.value);
-                adjustHeight();
-            }}
-            ref={editMessageRef}
-            style={{ boxSizing: 'border-box' }}
-        />
+        <div className={styles.userMainContent}>
+            <textarea
+                className={styles.content}
+                value={tempMessage}
+                rows={1}
+                onChange={(e) => {
+                    updateTempMessage(e.target.value);
+                    adjustHeight();
+                }}
+                ref={editMessageRef}
+                style={{ boxSizing: 'border-box' }}
+            />
+            <div className={globalStyles.buttonContainer}>
+                <button className={globalStyles.saveButton} 
+                    onClick={() => {/* handle submit action */}}
+                >
+                    Save & Submit
+                </button>
+                <button className={globalStyles.cancelButton} 
+                    onClick={() => {updateEditingMessage(false);}}
+                >
+                    Cancel
+                </button>
+            </div>
+        </div>
     );
 }
 
@@ -73,6 +89,10 @@ const MessageItem: React.FC<{
     const currentMessageEle = useRef<HTMLDivElement | null>(null);
 
     const [editingMessage, setEditingMessage] = useState(false);
+    const updateEditingMessage = useCallback((editing: boolean) => {
+        setEditingMessage(editing);
+    }, []);
+
     const [tempMessage, setTempMessage] = useState('');
     const updateTempMessage = useCallback((msg: string) => {
         setTempMessage(msg);
@@ -147,30 +167,15 @@ const MessageItem: React.FC<{
                         }}
                     ></div>
 
-                    <div className={styles.userMainContent}>
-                        {editingMessage ?
-                            <MessageEditor
-                                tempMessage={tempMessage}
-                                updateTempMessage={updateTempMessage}
-                            /> : (
-                            <div className={styles.content}>{message}</div>
-                        )}
-
-                        {editingMessage ?
-                            (<div className={globalStyles.buttonContainer}>
-                                <button className={globalStyles.saveButton} 
-                                    onClick={() => {/* handle submit action */}}
-                                >
-                                    Save & Submit
-                                </button>
-                                <button className={globalStyles.cancelButton} 
-                                    onClick={() => {/* handle cancel action */}}
-                                >
-                                    Cancel
-                                </button>
-                             </div>): <div></div>
-                        }
-                    </div>
+                    {editingMessage ?
+                        <MessageEditor
+                            editingMessage={editingMessage}
+                            updateEditingMessage={updateEditingMessage}
+                            tempMessage={tempMessage}
+                            updateTempMessage={updateTempMessage}
+                        /> : (
+                        <div className={styles.content}>{message}</div>
+                    )}
                         
                     <div className={`${styles.user} ${styles.avatar}`}>
                         <Image
@@ -181,7 +186,6 @@ const MessageItem: React.FC<{
                             alt="user"
                         />
                     </div>
-
                 </>
             ) : (
                 <>

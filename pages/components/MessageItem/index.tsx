@@ -25,11 +25,16 @@ import { set } from 'lodash';
 Highlightjs.registerLanguage('regex', regex);
 
 const MessageEditor: React.FC<{
+    id: string;
     editingMessage: boolean;
     updateEditingMessage: (editing: boolean) => void;
     tempMessage: string;
     updateTempMessage: (msg: string) => void;
-}> = ({ editingMessage, updateEditingMessage, tempMessage, updateTempMessage }) => {
+    editedMessageId?: string;
+    updateEditedMessageId?: (id: string) => void;
+    editedMessage?: string;
+    updateEditedMessage?: (msg: string) => void;
+}> = ({ id, editingMessage, updateEditingMessage, tempMessage, updateTempMessage, editedMessageId, updateEditedMessageId, editedMessage, updateEditedMessage }) => {
     const editMessageRef = useRef<HTMLTextAreaElement | null>(null);
 
     // Function to adjust the textarea height
@@ -61,7 +66,11 @@ const MessageEditor: React.FC<{
             />
             <div className={globalStyles.buttonContainer}>
                 <button className={globalStyles.saveButton} 
-                    onClick={() => {/* handle submit action */}}
+                    onClick={() => {
+                        updateEditedMessageId(id);
+                        updateEditedMessage(tempMessage);
+                        updateEditingMessage(false);
+                    }}
                 >
                     Save & Submit
                 </button>
@@ -80,8 +89,11 @@ const MessageItem: React.FC<{
     role: ERole;
     message: string;
     avatar: string;
-    removeMessageById?: (id: string) => void;
-}> = ({ id, role, message, avatar, removeMessageById}) => {
+    editedUserMessageId?: string;
+    updateEditedUserMessageId?: (id: string) => void;
+    editedUserMessage?: string;
+    updateEditedUserMessage?: (msg: string) => void;
+}> = ({ id, role, message, avatar, editedUserMessageId, updateEditedUserMessageId, editedUserMessage, updateEditedUserMessage }) => {
     const isImgResponse = message?.startsWith(
         'https://oaidalleapiprodscus.blob.core.windows.net/private'
     );
@@ -99,6 +111,9 @@ const MessageItem: React.FC<{
     }, []);
 
     const htmlString = () => {
+        // TODO: in equations x^2 may be rendered as x_2
+        // x_2 -> x__2
+        // plain text also wrong
         const md = MarkdownIt()
             .use(MdHighlight, {
                 hljs: Highlightjs,
@@ -169,13 +184,19 @@ const MessageItem: React.FC<{
 
                     {editingMessage ?
                         <MessageEditor
+                            id={id}
                             editingMessage={editingMessage}
                             updateEditingMessage={updateEditingMessage}
                             tempMessage={tempMessage}
                             updateTempMessage={updateTempMessage}
+                            editedMessageId={editedUserMessageId}
+                            updateEditedMessageId={updateEditedUserMessageId}
+                            editedMessage={editedUserMessage}
+                            updateEditedMessage={updateEditedUserMessage}
                         /> : (
                         <div className={styles.content}>{message}</div>
                     )}
+                    
                         
                     <div className={`${styles.user} ${styles.avatar}`}>
                         <Image

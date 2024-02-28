@@ -10,7 +10,7 @@ The functionality is Plus, while being "Plus"ly light-weight.
 - Conversations
   - Now the topic names of conversations are summarizations of the first user message as in ChatGPT, instead of simply the first 10 or so letters of the user message as in the original Light-GPT.
 - Text input
-  - [TODO] Support of editing user messages.
+  - Support editing user messages.
 
 ## Bug Fixes
 ### Serious

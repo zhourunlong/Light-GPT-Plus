@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { throttle } from 'lodash';
+import { remove, set, throttle } from 'lodash';
 
 import { useTranslation } from 'react-i18next';
 
@@ -127,9 +127,24 @@ export default function Home() {
     const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
     const tempCurrentAssistantMessageId = useRef(uuid());
 
-    const [loading, setLoading] = useState(false);
+    const [editedUserMessageId, setEditedUserMessageId] = useState('');
+    const updateEditedUserMessageId = useCallback((id: string) => {
+        setEditedUserMessageId(id);
+    }, []);
 
-    const controller = useRef<AbortController | null>(null);
+    const [editedUserMessage, setEditedUserMessage] = useState('');
+    const updateEditedUserMessage = useCallback((message: string) => {
+        setEditedUserMessage(message);
+    }, []);
+
+    useEffect(() => {
+        if (editedUserMessage !== '') {
+            chatGPTWithLatestUserPrompt(true);
+            setEditedUserMessage('');
+        }
+    }, [editedUserMessage]);
+
+    const [loading, setLoading] = useState(false);
 
     const scrollSmoothThrottle = throttle(
         () => {
@@ -158,7 +173,7 @@ export default function Home() {
 
     // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
     const openai = new OpenAI({
-        // baseURL: `http://192.168.1.2:1234/v1`, // for local test
+        baseURL: `http://192.168.1.2:1234/v1`, // for local test
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
     });
@@ -191,16 +206,46 @@ export default function Home() {
             return;
         }
 
-        // TODO: messageList may display previous messages before regenerate
-
-        let newMessageList = [];
+        let newMessageList = messageList.concat([]);
         if (isRegenerate) {
-            // Delete the last assistant message
-            removeMessageById(messageList[messageList.length - 1].id);
-            newMessageList = messageList.concat([]);
-        } else {
-            newMessageList = messageList.concat([]);
+            if (editedUserMessage !== '') {
+                let idsToDelete = [];
+                for (let i = messageList.length - 1; i >= 0; i--) {
+                    idsToDelete.push(messageList[i].id);
+                    if (messageList[i].id === editedUserMessageId) {
+                        break;
+                    }
+                }
+                for (const id of idsToDelete) {
+                    removeMessageById(id);
+                }
 
+                newMessageList = messageList.filter(message => !idsToDelete.includes(message.id));
+
+                const userMessageItem = newUserMessageItem(editedUserMessage);
+                newMessageList.push(userMessageItem);
+                if (activeTopicId) {
+                    await chatDB.addConversation({
+                        topicId: activeTopicId,
+                        ...userMessageItem,
+                    });
+                }
+            } else {
+                let idsToDelete = [];
+                for (let i = messageList.length - 1; i >= 0; i--) {
+                    if (messageList[i].role === ERole.assistant) {
+                        idsToDelete.push(messageList[i].id);
+                    } else {
+                        break;
+                    }
+                }
+                for (const id of idsToDelete) {
+                    removeMessageById(id);
+                }
+
+                newMessageList = messageList.filter(message => !idsToDelete.includes(message.id));
+            }
+        } else {
             // Add system message at the first step
             if (newMessageList.length === 0) {
                 const systemMessageItem = newSystemMessageItem(ChatSystemMessage);
@@ -255,7 +300,7 @@ export default function Home() {
         userPromptRef.current.style.height = 'auto';
         scrollSmoothThrottle();
 
-        const prompt = newMessageList[newMessageList.length - 1].content;
+        // const prompt = newMessageList[newMessageList.length - 1].content;
         
         // TODO: support image generation
         const isGenerateImage = false;
@@ -264,21 +309,19 @@ export default function Home() {
         try {
             setServiceErrorMessage('');
             setLoading(true);
-            controller.current = new AbortController();
 
             //let response: Response;
             let response: string;
             if (isGenerateImage) {
-                response = await generateImageWithText(
-                    apiKey,
-                    prompt,
-                    controller.current
-                );
-                const generateImgInfo = await response.json();
-                archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
-                setTimeout(() => {
-                    scrollSmoothThrottle();
-                }, 2000);
+                // response = await generateImageWithText(
+                //     apiKey,
+                //     prompt,
+                // );
+                // const generateImgInfo = await response.json();
+                // archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
+                // setTimeout(() => {
+                //     scrollSmoothThrottle();
+                // }, 2000);
             } else {            
                 const stream = await openai.chat.completions.create({
                     model: selectedModel,
@@ -308,7 +351,6 @@ export default function Home() {
             setLoading(false);
         } catch (error: any) {
             setLoading(false);
-            controller.current = null;
             setServiceErrorMessage(error?.message || 'Unknown Service Error');
         }
     };
@@ -325,7 +367,6 @@ export default function Home() {
                 });
             }
             setLoading(false);
-            controller.current = null;
             setCurrentAssistantMessage('');
             scrollSmoothThrottle();
         }
@@ -482,7 +523,11 @@ export default function Home() {
                                                 : robotAvatar
                                         }
                                         message={item.content}
-                                        removeMessageById={removeMessageById}
+                                        editedUserMessageId={editedUserMessageId}
+                                        updateEditedUserMessageId={updateEditedUserMessageId}
+                                        editedUserMessage={editedUserMessage}
+                                        updateEditedUserMessage={updateEditedUserMessage}
+                                        chatGPTWithLatestUserPrompt={chatGPTWithLatestUserPrompt}
                                     />
                                 ))}
                             {loading && currentAssistantMessage.length > 0 && (
@@ -571,35 +616,15 @@ export default function Home() {
                         </div>
                     </div>
                     <div className={styles.action}>
-                        {loading ? (
-                            <div className={styles.buttonContainer}>
-                                <div
-                                    className={styles.button}
-                                    onClick={() => {
-                                        if (controller.current) {
-                                            controller.current.abort();
-                                            setLoading(false);
-                                            archiveCurrentMessage(
-                                                currentAssistantMessage
-                                            );
-                                        }
-                                    }}
-                                >
-                                    Stop
-                                </div>
-                            </div>
-                        ) : (
-                            <div className={styles.buttonContainer}>
-                                <div
-                                    className={styles.button}
-                                    onClick={() =>
-                                        chatGPTWithLatestUserPrompt(true)
-                                    }
-                                >
-                                    Regenerate
-                                </div>
-                            </div>
-                        )}
+                        <div
+                            className={styles.button}
+                            onClick={() => {
+                                setEditedUserMessage("");
+                                chatGPTWithLatestUserPrompt(true);
+                            }}
+                        >
+                            Regenerate
+                        </div>
                     </div>
                 </div>
             </main>

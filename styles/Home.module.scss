@@ -405,49 +405,48 @@
     display: flex;
     justify-content: center;
     margin-top: 20px;
-    .button, .saveButton, .cancelButton {
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        transition: background-color 0.3s ease;
-        &:nth-child(2) {
-            margin-left: 30px;
-        }
-    }
-    
-    .button, .cancelButton {
-        border: 1px solid var(--text-color-light);
-        background-color: var(--body-bg);
-        color: var(--text-color-normal);
+}
 
-        &:hover {
-            background-color: var(--light-bg-color);
-        }
+.button, .saveButton, .cancelButton {
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+    &:nth-child(2) {
+        margin-left: 30px;
     }
+}
 
-    .button {
-        width: 100px;
-        height: 40px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+.button, .cancelButton {
+    border: 1px solid var(--text-color-light);
+    background-color: var(--body-bg);
+    color: var(--text-color-normal);
+
+    &:hover {
+        background-color: var(--light-bg-color);
     }
+}
 
-    .saveButton {
-        background-color: #007bff;
-        color: #fff;
+.button {
+    width: 100px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        &:hover {
-            background-color: #0069d9;
-        }
+.saveButton {
+    background-color: #007bff;
+    color: #fff;
+
+    &:hover {
+        background-color: #0069d9;
     }
-    
-    
 }
 
 /* Keyframes Spin */

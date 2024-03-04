@@ -5,12 +5,15 @@ It offers more necessary features, similar to ChatGPT, while fixing bugs of the 
 The functionality is Plus, while being "Plus"ly light-weight.
 
 ## Added Features
-- Model select
+- Model selection
   - On the top left corner, there is a drop down box to select models. Now support `GPT-4 Turbo`, `GPT-4` and `GPT-3.5 Turbo`.
 - Conversations
   - Now the topic names of conversations are summarizations of the first user message as in ChatGPT, instead of simply the first 10 or so letters of the user message as in the original Light-GPT.
-- Text input
   - Support editing user messages.
+- Storage
+  - Now conversations are stored in the server, instead of in the browser.
+- Communication
+  - Now the communication is proxied through the server.
 
 ## Bug Fixes
 ### Serious

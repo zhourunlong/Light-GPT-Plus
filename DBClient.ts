@@ -1,4 +1,4 @@
-const BASE_URL = `/api`;
+const BASE_URL = `/api/db`;
 
 interface Topic {
     id: string;

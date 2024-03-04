@@ -20,8 +20,6 @@ import MessageItem from './components/MessageItem';
 
 import HistoryTopicList from './components/HistoryTopicList';
 
-import { generateImageWithText } from '../open.ai.service';
-
 import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 
 import { ChatService } from '../DBClient';
@@ -173,7 +171,7 @@ export default function Home() {
 
     // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
     const openai = new OpenAI({
-        baseURL: `http://192.168.1.2:1234/v1`, // for local test
+        baseURL: `http://localhost:3000/api/openai`, // for local test
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
     });

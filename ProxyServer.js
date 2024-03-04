@@ -8,17 +8,27 @@ const handle = app.getRequestHandler();
 
 const PORT = 3000;
 const DB_SERVER_PORT = 3456;
+const OPENAI_SERVER = 'http://192.168.1.2:1234';
+// const OPENAI_SERVER = 'https://api.openai.com';
 
 app.prepare().then(() => {
   const server = express();
 
-  // Proxy configuration for forwarding requests to the database server
   server.use(
-    '/api',
+    '/api/db',
     createProxyMiddleware({
       target: `http://localhost:${DB_SERVER_PORT}`,
       changeOrigin: true,
-      pathRewrite: {'^/api' : ''}
+      pathRewrite: {'^/api/db' : ''}
+    })
+  );
+
+  server.use(
+    '/api/openai',
+    createProxyMiddleware({
+      target: OPENAI_SERVER,
+      changeOrigin: true,
+      pathRewrite: {'^/api/openai' : '/v1'},
     })
   );
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { v4 as uuid } from 'uuid';
 
-import { ChatService } from '../../../db';
+import { ChatService } from '../../../DBClient';
 
 import { IMessage } from '../../../interface';
 

@@ -24,7 +24,7 @@ import { generateImageWithText } from '../open.ai.service';
 
 import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 
-import { ChatService } from '../db';
+import { ChatService } from '../DBClient';
 
 import OpenAI from 'openai';
 
@@ -360,7 +360,6 @@ export default function Home() {
             const assistantMessageItem = newAssistantMessageItem(newCurrentAssistantMessage);
             setMessageList((list) => list.concat([assistantMessageItem]));
             if (activeTopicId) {
-                // 更新
                 chatDB.addConversation({
                     topicId: activeTopicId,
                     ...assistantMessageItem,

@@ -20,7 +20,6 @@ import { ERole } from '../../../interface';
 
 import styles from './index.module.scss';
 import globalStyles from '../../../styles/Home.module.scss';
-import { set } from 'lodash';
 
 Highlightjs.registerLanguage('regex', regex);
 

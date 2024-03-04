@@ -37,3 +37,4 @@ next-env.d.ts
 
 # api key config
 available-key.config.ts
+ChatDatabase.db

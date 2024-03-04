@@ -2,26 +2,42 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import MarkdownIt from 'markdown-it';
-
-import MdHighlight from 'markdown-it-highlightjs';
-
-// @ts-ignore
-import MdKatex from 'markdown-it-katex';
-
 import Highlightjs from 'highlight.js';
 import regex from 'highlight.js/lib/languages/ini';
-
-// styles
-import 'highlight.js/styles/atom-one-dark.css';
-import 'katex/dist/katex.min.css';
 
 import { ERole } from '../../../interface';
 
 import styles from './index.module.scss';
 import globalStyles from '../../../styles/Home.module.scss';
 
+import MarkdownIt from 'markdown-it';
+import MdHighlight from 'markdown-it-highlightjs';
+import MdKatex from 'markdown-it-katex';
+import 'highlight.js/styles/atom-one-dark.css';
+
 Highlightjs.registerLanguage('regex', regex);
+
+function renderMarkdown(message: string) {
+    const md = MarkdownIt()
+        .use(MdHighlight, {
+            hljs: Highlightjs,
+        })
+        .use(MdKatex);
+    const fence = md.renderer.rules.fence;
+    if (!fence) return '';
+    md.renderer.rules.fence = (...args) => {
+        const [tokens, idx] = args;
+        const token = tokens[idx];
+        const rawCode = fence(...args);
+        return `<div class='highlight-js-pre-container'>
+    <div id class="copy" data-code=${encodeURIComponent(token.content)}>
+    <i class="fa fa-clipboard" aria-hidden="true"></i>
+    </div>
+    ${rawCode}
+    </div>`;
+    };
+    return md.render(message || '');
+};
 
 const MessageEditor: React.FC<{
     id: string;
@@ -108,31 +124,6 @@ const MessageItem: React.FC<{
     const updateTempMessage = useCallback((msg: string) => {
         setTempMessage(msg);
     }, []);
-
-    const htmlString = () => {
-        // TODO: in equations x^2 may be rendered as x_2
-        // x_2 -> x__2
-        // plain text also wrong
-        const md = MarkdownIt()
-            .use(MdHighlight, {
-                hljs: Highlightjs,
-            })
-            .use(MdKatex);
-        const fence = md.renderer.rules.fence;
-        if (!fence) return '';
-        md.renderer.rules.fence = (...args) => {
-            const [tokens, idx] = args;
-            const token = tokens[idx];
-            const rawCode = fence(...args);
-            return `<div class='highlight-js-pre-container'>
-        <div id class="copy" data-code=${encodeURIComponent(token.content)}>
-        <i class="fa fa-clipboard" aria-hidden="true"></i>
-        </div>
-        ${rawCode}
-        </div>`;
-        };
-        return md.render(message || '');
-    };
 
     useEffect(() => {
         if (!currentMessageEle.current) return;
@@ -233,9 +224,10 @@ const MessageItem: React.FC<{
                         <div
                             className={styles.htmlContent}
                             dangerouslySetInnerHTML={{
-                                __html: htmlString(),
+                                __html: renderMarkdown(message),
                             }}
                         ></div>
+                        //<div className={styles.content}>{message}</div>
                     )}
                     <div className={styles.placeholder}></div>
                 </>

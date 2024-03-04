@@ -1,4 +1,4 @@
-const BASE_URL = `http://localhost:3456`;
+const BASE_URL = `/api`;
 
 interface Topic {
     id: string;

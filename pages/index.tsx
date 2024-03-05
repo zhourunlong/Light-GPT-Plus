@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { throttle } from 'lodash';
+import { set, throttle } from 'lodash';
 
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +27,7 @@ import { ChatService } from '../DBClient';
 import OpenAI from 'openai';
 
 import {
+    PORT,
     ThemeLocalKey,
     APIKeyLocalKey,
     encrypt,
@@ -142,7 +143,7 @@ export default function Home() {
         }
     }, [editedUserMessage]);
 
-    const [loading, setLoading] = useState(false);
+    const [loadingTopicId, setLoadingTopicId] = useState('');
 
     const scrollSmoothThrottle = throttle(
         () => {
@@ -169,9 +170,18 @@ export default function Home() {
 
     const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
 
+    const [serverIp, setServerIp] = useState('Loading...');
+
+    useEffect(() => {
+        fetch('/api/getServerIP')
+            .then(response => response.json())
+            .then(data => setServerIp(data.ip))
+            .catch(error => setServerIp('Error fetching IP' + error));
+    }, []);
+    
     // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
     const openai = new OpenAI({
-        baseURL: process.env.REACT_APP_API_BASE_URL,
+        baseURL: "http://" + serverIp + `:${PORT}/api/openai`,
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
     });
@@ -306,7 +316,7 @@ export default function Home() {
         // get response
         try {
             setServiceErrorMessage('');
-            setLoading(true);
+            setLoadingTopicId(activeTopicId);
 
             //let response: Response;
             let response: string;
@@ -346,9 +356,10 @@ export default function Home() {
             //     throw new Error(response.statusText);
             // }
 
-            setLoading(false);
+            setLoadingTopicId('');
         } catch (error: any) {
-            setLoading(false);
+            setLoadingTopicId('');
+
             setServiceErrorMessage(error?.message || 'Unknown Service Error');
         }
     };
@@ -363,7 +374,7 @@ export default function Home() {
                     ...assistantMessageItem,
                 });
             }
-            setLoading(false);
+            setLoadingTopicId('');
             setCurrentAssistantMessage('');
             scrollSmoothThrottle();
         }
@@ -528,7 +539,7 @@ export default function Home() {
                                         chatGPTWithLatestUserPrompt={chatGPTWithLatestUserPrompt}
                                     />
                                 ))}
-                            {loading && currentAssistantMessage.length > 0 && (
+                            {currentAssistantMessage.length > 0 && activeTopicId === loadingTopicId && (
                                 <MessageItem
                                     id={tempCurrentAssistantMessageId.current}
                                     role={ERole.assistant}
@@ -569,7 +580,7 @@ export default function Home() {
                         <div className={styles.textareaContainer}>
                             <textarea
                                 className={styles.userPrompt}
-                                disabled={loading}
+                                disabled={loadingTopicId !== ''}
                                 onInput={() => {
                                     userPromptRef.current!.style.height = 'auto';
 
@@ -594,7 +605,7 @@ export default function Home() {
                                 }}
                             />
                             <div className={styles.submit}>
-                                {loading ? (
+                                {loadingTopicId ? (
                                     <div className={styles.spinner}></div>
                                 ) : (
                                     <i

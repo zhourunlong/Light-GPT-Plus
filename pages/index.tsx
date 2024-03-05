@@ -33,7 +33,7 @@ import {
     encrypt,
     decrypt,
     ChatSystemMessage,
-    SummarizeSystemMessage
+    SummarizePrompt
 } from '../utils';
 
 const chatDB = new ChatService();
@@ -256,7 +256,7 @@ export default function Home() {
         } else {
             // Add system message at the first step
             if (newMessageList.length === 0) {
-                const systemMessageItem = newSystemMessageItem(ChatSystemMessage);
+                const systemMessageItem = newSystemMessageItem(ChatSystemMessage(selectedModel));
                 newMessageList.push(systemMessageItem);
                 if (activeTopicId) {
                     await chatDB.addConversation({
@@ -281,11 +281,11 @@ export default function Home() {
                         messages: [
                             {
                                 role: ERole.system,
-                                content: SummarizeSystemMessage,
+                                content: ChatSystemMessage(selectedModel),
                             },
                             {
                                 role: newMessageList[1].role,
-                                content: newMessageList[1].content,
+                                content: SummarizePrompt + newMessageList[1].content,
                             },
                         ],
                         temperature: 0.7,

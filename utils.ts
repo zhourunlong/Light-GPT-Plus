@@ -116,6 +116,18 @@ export const formatTimestamp = (timestamp: number) => {
     return formattedDate;
 };
 
+function getCurrentDate(): string {
+    const today: Date = new Date();
+    const year: number = today.getFullYear();
+    const month: number = today.getMonth() + 1;
+    const day: number = today.getDate();
+
+    const formattedMonth: string = month < 10 ? `0${month}` : `${month}`;
+    const formattedDay: string = day < 10 ? `0${day}` : `${day}`;
+
+    return `${year}-${formattedMonth}-${formattedDay}`;
+}
+
 export const ThemeLocalKey = 'light_gpt_theme';
 export const APIKeyLocalKey = 'light_gpt_api_key';
 
@@ -124,7 +136,20 @@ export const APIKeyLocalKey = 'light_gpt_api_key';
 // You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Knowledge cutoff: 2022-01 Current date: 2024-02-22
 
 
-export const ChatSystemMessage = `You are ChatGPT, a versatile expert, please answer each of my questions in a simple and easy-to-understand way as much as possible`;
 
-export const SummarizeSystemMessage = "You are a helpful assistant assigned with the task: summarize the sentence in 5 words or fewer. Be as concise as possible."
+const ModelName: Record<string, string> = {
+    "gpt-3": "GPT-3.5",
+    "gpt-4": "GPT-4",
+};
 
+const CutOffDate: Record<string, string> = {
+    "gpt-3": "2022-01",
+    "gpt-4": "2023-04",
+}
+
+export const ChatSystemMessage = (modelFullName: string) => {
+    const model = modelFullName.slice(0, 5);
+    return `You are ChatGPT, a large language model trained by OpenAI, based on the ${ModelName[model]} architecture. Knowledge cutoff: ${CutOffDate[model]} Current date: ${getCurrentDate()}`;
+}
+
+export const SummarizePrompt = "Summarize a topic for the following message in 5 words, and output only the topic.\n\n----- Message -----\n";

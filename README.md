@@ -15,7 +15,7 @@ The functionality is Plus, while being "Plus"ly light-weight.
 - Communication
   - Now the communication is proxied through the server.
 
-## Bug Fixes
+## Bug Fixes or Changes
 ### Serious
 - System message
   - In the original Light-GPT, the system message (named `systemRoles`) was never actually sent to OpenAI api. Now this bug is fixed.
@@ -26,15 +26,17 @@ The functionality is Plus, while being "Plus"ly light-weight.
 ### Small
 - Text input
   - In the original Light-GPT, deleting the lengthy input text will not shrink the text input area. Now this bug is fixed.
+- System message
+  - Change the default system message.
+- Avatars
+  - Change the original avatars to ones that are more theme-consistent.
 
 ## Removed Features
 - Avatars
-  - Change the original avatars to ones that are more theme-consistent.
   - Remove the support for changing avatars.
 - Context window
   - Remove the limit of (changable) context window (named `chatBackgroundContext`) as it is not used in ChatGPT.
 - System message
-  - [TODO] Change the default system message.
   - Remove the support for customizing the system message (named `systemRoles` in the original Light-GPT).
 - Page saving
   - Remove the methods to save the page into pdf and picture.

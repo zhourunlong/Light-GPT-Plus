@@ -6,20 +6,35 @@ import {
 
 import CryptoJS from 'crypto-js';
 
-export const SECRET_KEY =
-    '64787423c7ea99e608bab61303b309a996a1e000db87bd73533bd979892b1644';
+const SECRET_KEY = CryptoJS.enc.Utf8.parse('08cba61fd32b2f26bb096d5e12532f6cf3ec876639b4493329709188cb6973d0');
+const FIXED_IV = CryptoJS.enc.Utf8.parse('b2c55084b1b4f96bd84257a1abbf5f93');
 
-export const encryptApiKey = (apiKey: string) => {
-    const encryptedApiKey = CryptoJS.AES.encrypt(apiKey, SECRET_KEY).toString();
-    return encryptedApiKey;
+export const encrypt = (message: string): string => {
+    const options = {
+        iv: FIXED_IV,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    };
+
+    const encrypted = CryptoJS.AES.encrypt(message, SECRET_KEY, options);
+    let base64 = encrypted.toString();
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };
 
-export const decryptApiKey = (encryptedApiKey: string) => {
-    // 使用AES加密算法进行解密
-    const bytes = CryptoJS.AES.decrypt(encryptedApiKey, SECRET_KEY);
-    const decryptedApiKey = bytes.toString(CryptoJS.enc.Utf8);
-    return decryptedApiKey;
+export const decrypt = (encryptedMessage: string): string => {
+    encryptedMessage = encryptedMessage.replace(/-/g, '+').replace(/_/g, '/');
+
+    const options = {
+        iv: FIXED_IV,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+    };
+
+    const decrypted = CryptoJS.AES.decrypt(encryptedMessage, SECRET_KEY, options);
+    const originalMessage = decrypted.toString(CryptoJS.enc.Utf8);
+    return originalMessage;
 };
+
 
 export const parseOpenAIStream = (rawResponse: Response) => {
     const encoder = new TextEncoder();

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
-import { remove, set, throttle } from 'lodash';
+import { throttle } from 'lodash';
 
 import { useTranslation } from 'react-i18next';
 
@@ -27,11 +27,10 @@ import { ChatService } from '../DBClient';
 import OpenAI from 'openai';
 
 import {
-    dataURItoBlob,
     ThemeLocalKey,
     APIKeyLocalKey,
-    encryptApiKey,
-    decryptApiKey,
+    encrypt,
+    decrypt,
     ChatSystemMessage,
     SummarizeSystemMessage
 } from '../utils';
@@ -79,6 +78,7 @@ export default function Home() {
 
     const [tempApiKeyValue, setTempApiKeyValue] = useState('');
     const [apiKey, setApiKey] = useState('');
+    const [encryptedApiKey, setEncryptedApiKey] = useState('');
 
     const chatHistoryEle = useRef<HTMLDivElement | null>(null);
 
@@ -171,7 +171,7 @@ export default function Home() {
 
     // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
     const openai = new OpenAI({
-        baseURL: `http://localhost:3000/api/openai`, // for local test
+        baseURL: `http://localhost:3000/api/openai`,
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
     });
@@ -390,9 +390,9 @@ export default function Home() {
 
         const light_gpt_api_key =
             window.localStorage.getItem(APIKeyLocalKey) || '';
-        const decryptedApiKey = decryptApiKey(light_gpt_api_key);
-        if (decryptedApiKey !== '') {
-            // 不显示设置过的api_key
+        if (light_gpt_api_key !== '') {
+            setEncryptedApiKey(light_gpt_api_key);
+            const decryptedApiKey = decrypt(light_gpt_api_key);
             setApiKey(decryptedApiKey);
             setTempApiKeyValue(decryptedApiKey);
         }
@@ -424,6 +424,7 @@ export default function Home() {
                 <div className={styles.historyTopicListContainer}>
                     <HistoryTopicList
                         historyTopicListVisible={asideVisible}
+                        encApiKey={encryptedApiKey}
                         currentMessageList={messageList}
                         updateCurrentMessageList={updateCurrentMessageList}
                         activeTopicId={activeTopicId}
@@ -550,7 +551,7 @@ export default function Home() {
                             <div className={styles.desc}>
                                 {t('apiKeyRequiredTip2')}
                                 <Link href="https://openai.com" target="_blank">
-                                    Open Ai Platform
+                                    Open AI Platform
                                 </Link>
                             </div>
                         </div>
@@ -669,16 +670,15 @@ export default function Home() {
                                     onClick={() => {
                                         setActiveSystemMenu('');
                                         setApiKey(tempApiKeyValue);
-
-                                        const encryptedApiKey =
-                                            encryptApiKey(tempApiKeyValue);
+                                        const encApiKey = encrypt(tempApiKeyValue);
+                                        setEncryptedApiKey(encApiKey);
                                         window.localStorage.setItem(
                                             APIKeyLocalKey,
-                                            encryptedApiKey
+                                            encApiKey
                                         );
                                     }}
                                 >
-                                    {t('save')}
+                                    Save
                                 </button>
                             </div>
                         </div>

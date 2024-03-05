@@ -1,12 +1,13 @@
 const BASE_URL = `/api/db`;
 
-interface Topic {
+export interface Topic {
     id: string;
     name: string;
     createdAt: number;
+    encApiKey: string;
 }
 
-interface Conversation {
+export interface Conversation {
     id: string;
     role: string;
     content: string;
@@ -15,8 +16,8 @@ interface Conversation {
 }
 
 export class ChatService {
-    async getTopics(): Promise<Topic[]> {
-        return fetch(`${BASE_URL}/topics`)
+    async getTopics(encApiKey: string): Promise<Topic[]> {
+        return fetch(`${BASE_URL}/topics/by-apikey/${encApiKey}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to get topics');
@@ -28,6 +29,7 @@ export class ChatService {
                     id: item.id,
                     name: item.name,
                     createdAt: item.createdAt,
+                    encApiKey: item.encApiKey,
                 }));
                 return topics;
             })
@@ -38,7 +40,7 @@ export class ChatService {
     }
 
     async getTopicById(topicId: string): Promise<Topic | undefined> {
-        return fetch(`${BASE_URL}/topics/${topicId}`)
+        return fetch(`${BASE_URL}/topics/by-id/${topicId}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to get topic by id');
@@ -49,7 +51,8 @@ export class ChatService {
                 const topic: Topic = {
                     id: data.id,
                     name: data.name,
-                    createdAt: data.createdAt
+                    createdAt: data.createdAt,
+                    encApiKey: data.encApiKey,
                 };
                 return topic;
             })
@@ -60,7 +63,7 @@ export class ChatService {
     }
 
     async getConversationsByTopicId(topicId: string): Promise<Conversation[]> {
-        return fetch(`${BASE_URL}/topics/${topicId}/conversations`)
+        return fetch(`${BASE_URL}/topics/by-id/${topicId}/conversations`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to get conversations by topic id');
@@ -124,7 +127,7 @@ export class ChatService {
     }
 
     async deleteTopicById(topicId: string): Promise<void> {
-        return fetch(`${BASE_URL}/topics/${topicId}`, {
+        return fetch(`${BASE_URL}/topics/by-id/${topicId}`, {
             method: 'DELETE',
         })
             .then(response => {
@@ -136,7 +139,7 @@ export class ChatService {
     }
 
     async updateTopicNameById(topicId: string, name: string): Promise<void> {
-        return fetch(`${BASE_URL}/topics/${topicId}`, {
+        return fetch(`${BASE_URL}/topics/by-id/${topicId}`, {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ name: name }),

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 import { v4 as uuid } from 'uuid';
 
-import { ChatService } from '../../../DBClient';
+import { Topic, ChatService } from '../../../DBClient';
 
 import { IMessage } from '../../../interface';
 
@@ -12,6 +12,7 @@ const chatDB = new ChatService();
 
 const HistoryTopicList: React.FC<{
     historyTopicListVisible: boolean;
+    encApiKey: string;
     currentMessageList: IMessage[];
     updateCurrentMessageList: (messages: IMessage[]) => void;
     activeTopicId: string;
@@ -22,6 +23,7 @@ const HistoryTopicList: React.FC<{
     hideMask: () => void;
 }> = ({
     historyTopicListVisible,
+    encApiKey,
     currentMessageList,
     updateCurrentMessageList,
     activeTopicId,
@@ -32,17 +34,20 @@ const HistoryTopicList: React.FC<{
     hideMask,
 }) => {
     const [historyTopicList, setHistoryTopicList] = useState<
-        { id: string; name: string; createdAt: number}[]
+        Topic[]
     >([]);
+
+    const encApiKeyHeader = "APIKEYHEADER";
 
     const generateTopic = () => {
         const topicId = uuid();
         const newTopicName = "New chat";
 
-        const newTopic = {
+        const newTopic: Topic = {
             id: topicId,
             name: newTopicName,
             createdAt: Date.now(),
+            encApiKey: encApiKeyHeader + encApiKey,
         };
 
         chatDB.addTopic(newTopic);
@@ -50,8 +55,8 @@ const HistoryTopicList: React.FC<{
         newHistoryTopicList.unshift(newTopic);
 
         updateActiveTopicId(topicId);
-        updateCurrentMessageList([]);
         updateActiveTopicName(newTopicName);
+        updateCurrentMessageList([]);
         
         setHistoryTopicList(newHistoryTopicList);
     };
@@ -74,41 +79,18 @@ const HistoryTopicList: React.FC<{
 
     useEffect(() => {
         const init = async () => {
-            const topics = await chatDB.getTopics();
-
-            if (topics.length === 0) {
-                // 生成一个新对话
-                const topicId = uuid();
-                const newTopicName = "New chat";
-
-                const newTopic = {
-                    id: topicId,
-                    name: newTopicName,
-                    createdAt: Date.now(),
-                };
-
-                chatDB.addTopic(newTopic);
-                const newHistoryTopicList = [newTopic];
-                updateActiveTopicId(topicId);
-                updateCurrentMessageList([]);
-                updateActiveTopicName(newTopicName);
-                setHistoryTopicList(newHistoryTopicList);
-                return;
-            }
+            const topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
 
             setHistoryTopicList(topics);
-            updateActiveTopicId(topics[0].id);
+            updateActiveTopicId('');
 
             showMask();
-            // message-list for topic
-            const currentMessageList = await chatDB.getConversationsByTopicId(
-                topics[0].id
-            );
-            updateCurrentMessageList(currentMessageList as IMessage[]);
+            updateCurrentMessageList([]);
             hideMask();
         };
         init();
     }, [
+        encApiKey,
         updateActiveTopicId,
         updateCurrentMessageList,
         hideMask,

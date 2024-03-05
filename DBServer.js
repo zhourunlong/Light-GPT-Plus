@@ -11,7 +11,8 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS topics (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        createdAt INTEGER NOT NULL
+        createdAt INTEGER NOT NULL,
+        encApiKey TEXT NOT NULL
     )`);
 
     // Create conversations table
@@ -20,8 +21,7 @@ db.serialize(() => {
         role TEXT NOT NULL,
         content TEXT NOT NULL,
         topicId TEXT NOT NULL,
-        createdAt INTEGER NOT NULL,
-        FOREIGN KEY(topicId) REFERENCES topics(id)
+        createdAt INTEGER NOT NULL
     )`);
 });
 
@@ -40,24 +40,23 @@ app.listen(DBPort, () => {
 });
 
 
-function getTopics(callback) {
-    const sql = `SELECT * FROM topics ORDER BY createdAt DESC`;
-    db.all(sql, [], (err, rows) => {callback(err, rows);});
+function getTopics(encApiKey, callback) {
+    const sql = `SELECT * FROM topics WHERE encApiKey = ? ORDER BY createdAt DESC`;
+    db.all(sql, [encApiKey], (err, rows) => {callback(err, rows);});
 }
 
-app.get('/topics', (req, res) => {
-    console.log('Fetching topics');
-    getTopics((err, topics) => {
+app.get('/topics/by-apikey/:encApiKey', (req, res) => {
+    const { encApiKey } = req.params;
+    console.log('Fetching topics with encApiKey:', encApiKey);
+    getTopics(encApiKey, (err, topics) => {
         if (err) {
             console.error('Error fetching topics:', err);
             res.sendStatus(500);
         } else {
-            const sortedTopics = topics.sort((a, b) => b.createdAt - a.createdAt);
-
-            const topicIds = sortedTopics.map(topic => topic.id.slice(0, 5));
+            const topicIds = topics.map(topic => topic.id.slice(0, 5));
             console.log(topicIds);
 
-            res.json(sortedTopics);
+            res.json(topics);
         }
     });
 });
@@ -68,7 +67,7 @@ function getTopicById(topicId, callback) {
     db.get(sql, [topicId], (err, row) => {callback(err, row);});
 }
 
-app.get('/topics/:topicId', (req, res) => {
+app.get('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
     console.log('Fetching topic:', topicId.slice(0, 5));
     getTopicById(topicId, (err, topic) => {
@@ -91,7 +90,7 @@ function getConversationsByTopicId(topicId, callback) {
     db.all(sql, [topicId], (err, rows) => {callback(err, rows);});
 }
 
-app.get('/topics/:topicId/conversations', (req, res) => {
+app.get('/topics/by-id/:topicId/conversations', (req, res) => {
     const { topicId } = req.params;
     console.log('Fetching conversations for topic:', topicId.slice(0, 5));
     getConversationsByTopicId(topicId, (err, conversations) => {
@@ -99,8 +98,7 @@ app.get('/topics/:topicId/conversations', (req, res) => {
             console.error('Error fetching conversations:', err);
             res.sendStatus(500);
         } else {
-            const sortedConversations = conversations.sort((a, b) => a.createdAt - b.createdAt);
-            res.json(sortedConversations);
+            res.json(conversations);
         }
     });
 });
@@ -148,9 +146,9 @@ app.delete('/conversations/:conversationId', (req, res) => {
 
 
 function addTopic(topic, callback) {
-    const { id, name, createdAt } = topic;
-    const sql = `INSERT INTO topics (id, name, createdAt) VALUES (?, ?, ?)`;
-    db.run(sql, [id, name, createdAt], (err) => {callback(err);});
+    const { id, name, createdAt, encApiKey } = topic;
+    const sql = `INSERT INTO topics (id, name, createdAt, encApiKey) VALUES (?, ?, ?, ?)`;
+    db.run(sql, [id, name, createdAt, encApiKey], (err) => {callback(err);});
 }
 
 app.post('/topics', (req, res) => {
@@ -182,7 +180,7 @@ function deleteTopicById(topicId, callback) {
     });
 }
 
-app.delete('/topics/:topicId', (req, res) => {
+app.delete('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
     console.log('Deleting topic:', topicId.slice(0, 5));
     deleteTopicById(topicId, (err) => {
@@ -201,7 +199,7 @@ function updateTopicNameById(topicId, name, callback) {
     db.run(sql, [name, topicId], (err) => {callback(err);});
 }
 
-app.patch('/topics/:topicId', (req, res) => {
+app.patch('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
     const { name } = req.body;
     console.log('Updating topic name:', topicId.slice(0, 5), name);

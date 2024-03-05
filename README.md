@@ -22,7 +22,7 @@ The functionality is Plus, while being "Plus"ly light-weight.
 - Conversation display
   - In the original Light-GPT, reopening the topic tab after multiple regeneration displayed all the assistant messages. Now this bug is fixed.
   - Math equation rendering bug: $x^2$ -> $x_2$. Now this bug is fixed.
-  - [TODO] When generating a message, clicking on another topic will also display the generating process.
+  - When generating a message, clicking on another topic will also display the generating process. Now this bug is fixed.
 ### Small
 - Text input
   - In the original Light-GPT, deleting the lengthy input text will not shrink the text input area. Now this bug is fixed.

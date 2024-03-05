@@ -30,9 +30,8 @@ db.serialize(() => {
 
 
 const express = require('express');
-const cors = require('cors');
 const app = express();
-app.use(cors(), express.json());
+app.use(express.json());
 
 const DBPort = 3456;
 app.listen(DBPort, () => {

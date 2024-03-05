@@ -171,7 +171,7 @@ export default function Home() {
 
     // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
     const openai = new OpenAI({
-        baseURL: `http://localhost:3000/api/openai`,
+        baseURL: process.env.REACT_APP_API_BASE_URL,
         apiKey: apiKey,
         dangerouslyAllowBrowser: true,
     });

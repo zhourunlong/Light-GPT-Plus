@@ -557,13 +557,7 @@ export default function Home() {
                                 OpenAI API Key Required
                             </div>
                             <div className={styles.desc}>
-                                {t('apiKeyRequiredTip1')}
-                            </div>
-                            <div className={styles.desc}>
-                                {t('apiKeyRequiredTip2')}
-                                <Link href="https://openai.com" target="_blank">
-                                    Open AI Platform
-                                </Link>
+                                {t('apiKeyRequiredTip')}
                             </div>
                         </div>
                     )}
@@ -652,9 +646,9 @@ export default function Home() {
                     ></i>
                     {activeSystemMenu === SystemSettingMenu.apiKeySettings && (
                         <div className={styles.systemRoleSettings}>
-                            <label htmlFor="apiKey">Open AI API Key</label>
+                            <label htmlFor="apiKey">OpenAI API Key</label>
                             <input
-                                placeholder="Enter your open ai api key"
+                                placeholder="Enter your OpenAI API key"
                                 id="apiKey"
                                 value={tempApiKeyValue}
                                 onChange={(e) => {
@@ -672,7 +666,7 @@ export default function Home() {
                                     href="https://platform.openai.com/account/api-keys"
                                     target="_blank"
                                 >
-                                    Open AI Platform API KEYS
+                                    OpenAI
                                 </Link>{' '}
                             </div>
                             <div className={styles.buttonContainer}>

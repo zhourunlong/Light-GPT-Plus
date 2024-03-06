@@ -184,7 +184,7 @@ const MessageItem: React.FC<{
                             editedMessage={editedUserMessage}
                             updateEditedMessage={updateEditedUserMessage}
                         /> : (
-                        <div className={styles.content}>{message}</div>
+                        <div className={styles.content}>{message}&nbsp;</div>
                     )}
                     
                         

@@ -50,6 +50,7 @@
         border: 1px solid var(--border-color);
         color: var(--text-color-normal);
         overflow-y: hidden;
+        white-space: pre-wrap;
     }
     .htmlContent {
         flex: 1;

@@ -4,6 +4,28 @@ Light-GPT Plus is built on [Light-GPT](https://github.com/riwigefi/light-gpt).
 It offers more necessary features, similar to ChatGPT, while fixing bugs of the original Light-GPT and removing unnecessary features.
 The functionality is Plus, while being "Plus"ly light-weight.
 
+## Running
+
+Currently, the database server and the chat server take ports `3456` and `3000`, respectively.
+These values are hardcoded, so you may need to manually change them.
+Support of changing them will come in future versions.
+
+Install dependencies:
+```
+pnpm install
+```
+
+Run the database server (you may need to start a `screen` to keep it running in background):
+```
+node DBServer.js
+```
+
+Run the chat server (you may need to start another `screen` to keep it running in background):
+```
+pnpm run dev
+```
+
+
 ## Added Features
 - Model selection
   - On the top left corner, there is a drop down box to select models. Now support `GPT-4 Turbo`, `GPT-4` and `GPT-3.5 Turbo`.

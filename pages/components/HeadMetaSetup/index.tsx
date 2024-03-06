@@ -13,10 +13,12 @@ const HeadMetaSetup = () => {
             />
             <meta
                 name="description"
-                content="Light-GPT is an interactive website project b"
+                content="Light-GPT Plus is an interactive website project"
             />
 
             <meta name="keywords" content="Next.js,ChatGPT,GPT,AI" />
+
+            <title>Light-GPT Plus</title>
         </Head>
     );
 };

@@ -152,4 +152,4 @@ export const ChatSystemMessage = (modelFullName: string) => {
     return `You are ChatGPT, a large language model trained by OpenAI, based on the ${ModelName[model]} architecture. Knowledge cutoff: ${CutOffDate[model]} Current date: ${getCurrentDate()}`;
 }
 
-export const SummarizePrompt = "Summarize a topic for the following message in 5 words, and output only the topic.\n\n----- Message -----\n";
+export const SummarizePrompt = "Summarize a topic for the following message in 5 words. Output only the topic content.\n\n----- Message -----\n";

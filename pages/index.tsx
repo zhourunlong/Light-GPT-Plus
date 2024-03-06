@@ -169,24 +169,14 @@ export default function Home() {
     });
 
     const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
-
-    const [serverIp, setServerIp] = useState('Loading...');
-
-    useEffect(() => {
-        fetch('/api/getServerIP')
-            .then(response => response.json())
-            .then(data => setServerIp(data.ip))
-            .catch(error => setServerIp('Error fetching IP' + error));
-    }, []);
-    
-    // Make sure to enable Cross-Origin Resource Sharing (CORS) on the server side
-    const openai = new OpenAI({
-        baseURL: "http://" + serverIp + `:${PORT}/api/openai`,
-        apiKey: apiKey,
-        dangerouslyAllowBrowser: true,
-    });
-
+   
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
+        const openai = new OpenAI({
+            baseURL: window.location.href + "api/openai",
+            apiKey: apiKey,
+            dangerouslyAllowBrowser: true,
+        });
+
         // api request rate limit
         const now = Date.now();
         if (now - apiRequestRateLimit.current.lastRequestTime >= 60000) {

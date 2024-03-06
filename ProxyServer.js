@@ -16,21 +16,6 @@ const OPENAI_SERVER = 'https://api.openai.com';
 app.prepare().then(() => {
     const server = express();
 
-    server.get('/api/getServerIP', (req, res) => {
-        const networkInterfaces = os.networkInterfaces();
-        let ipAddresses = [];
-
-        Object.keys(networkInterfaces).forEach((interfaceName) => {
-            networkInterfaces[interfaceName].forEach((iface) => {
-                if ('IPv4' !== iface.family || iface.internal !== false) return;
-
-                ipAddresses.push(iface.address);
-            });
-        });
-
-        res.json({ ip: ipAddresses[0] });
-    });
-
     server.use(
         '/api/db',
         createProxyMiddleware({

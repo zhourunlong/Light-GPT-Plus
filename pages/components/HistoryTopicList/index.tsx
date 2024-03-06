@@ -80,12 +80,21 @@ const HistoryTopicList: React.FC<{
     useEffect(() => {
         const init = async () => {
             const topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
-
             setHistoryTopicList(topics);
-            updateActiveTopicId('');
+
+            // TODO: When first time changing to a new api key, the old topics are still shown.
+            if (topics.length === 0) {
+                generateTopic();
+                return;
+            }
+
+            updateActiveTopicId(topics[0].id);
 
             showMask();
-            updateCurrentMessageList([]);
+            const currentMessageList = await chatDB.getConversationsByTopicId(
+                topics[0].id
+            );
+            updateCurrentMessageList(currentMessageList as IMessage[]);
             hideMask();
         };
         init();

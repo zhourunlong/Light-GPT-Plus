@@ -275,7 +275,7 @@ export default function Home() {
                             },
                             {
                                 role: newMessageList[1].role,
-                                content: SummarizePrompt + newMessageList[1].content,
+                                content: SummarizePrompt + newMessageList[1].content.slice(0, 300) + '...',
                             },
                         ],
                         temperature: 0.7,

@@ -137,14 +137,14 @@ export const APIKeyLocalKey = 'light_gpt_api_key';
 
 
 export const Models = [
-    { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'High-speed version with optimized performance.', cutOffDate: '2023-04' },
-    { id: 'gpt-4', name: 'GPT-4', description: 'The fourth generation model offering balanced performance.', cutOffDate: '2023-04' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Efficient version of GPT-3.5 with faster responses.', cutOffDate: '2022-01' },
+    { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'Enhanced with 128k context and fresher knowledge, it\'s more powerful and affordable than GPT-4.', cutOffDate: '2023-12' },
+    { id: 'gpt-4', name: 'GPT-4', description: 'Proficient in various domains, excelling in complex problem-solving using natural language.', cutOffDate: '2021-09' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Cost-effective models with impressive capabilities for diverse tasks.', cutOffDate: '2021-09' },
 ];
 
 export const ChatSystemMessage = (modelFullName: string) => {
     const modelName = Models.find(model => model.id === modelFullName)?.name || modelFullName;
-    const cutOffDate = Models.find(model => model.id === modelFullName)?.cutOffDate || '2022-01';
+    const cutOffDate = Models.find(model => model.id === modelFullName)?.cutOffDate || 'Unknown';
     return `You are ChatGPT, a large language model trained by OpenAI, based on the ${modelName} architecture. Knowledge cutoff: ${cutOffDate} Current date: ${getCurrentDate()}`;
 }
 

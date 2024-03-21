@@ -6,6 +6,8 @@ import styles from './index.module.scss';
 
 import { Models } from "../../../utils";
 
+import '@fortawesome/fontawesome-free/css/all.min.css';
+
 
 const IndexHeader: React.FC<{
     theme: Theme;
@@ -26,6 +28,7 @@ const IndexHeader: React.FC<{
           <div className={styles.modelSelector}>
             <div className={styles.selectedModel} onClick={() => setIsOpen(!isOpen)}>
               {<strong>{Models.find(model => model.id === selectedModel)?.name}</strong> || 'Select a model'}
+              <span className={styles.chevronIcon}><i className="fas fa-chevron-down"></i></span>
             </div>
             {isOpen && (
               <div className={styles.dropdown}>

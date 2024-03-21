@@ -23,6 +23,14 @@
         color: var(--text-color-normal);
         cursor: pointer;
         user-select: none; /* Prevent text selection */
+        display: flex; /* Add this to align text and icon horizontally */
+        align-items: center; /* Center-align items vertically */
+      }
+
+      .chevronIcon {
+        margin-left: 8px; /* Adjust the space between the text and the icon */
+        color: var(--text-color-light); /* Make the icon a little greyish */
+        font-size: 12px; /* Make the icon smaller */
       }
       
       .dropdown {

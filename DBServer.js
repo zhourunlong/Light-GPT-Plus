@@ -11,7 +11,7 @@ db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS topics (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
-        createdAt INTEGER NOT NULL,
+        modifiedAt INTEGER NOT NULL,
         encApiKey TEXT NOT NULL
     )`);
 
@@ -40,7 +40,7 @@ app.listen(DBPort, () => {
 
 
 function getTopics(encApiKey, callback) {
-    const sql = `SELECT * FROM topics WHERE encApiKey = ? ORDER BY createdAt DESC`;
+    const sql = `SELECT * FROM topics WHERE encApiKey = ? ORDER BY modifiedAt DESC`;
     db.all(sql, [encApiKey], (err, rows) => {callback(err, rows);});
 }
 
@@ -105,9 +105,18 @@ app.get('/topics/by-id/:topicId/conversations', (req, res) => {
 
 function addConversation(conversation, callback) {
     const { id, role, content, topicId, createdAt } = conversation;
-    const sql = `INSERT INTO conversations (id, role, content, topicId, createdAt) VALUES (?, ?, ?, ?, ?)`;
-    db.run(sql, [id, role, content, topicId, createdAt], (err) => {callback(err);});
+    const insertSql = `INSERT INTO conversations (id, role, content, topicId, createdAt) VALUES (?, ?, ?, ?, ?)`;
+    const updateSql = `UPDATE topics SET modifiedAt = ? WHERE id = ?`;
+    db.run(insertSql, [id, role, content, topicId, createdAt], function(err) {
+        if (err) {
+            callback(err);
+            return;
+        }
+        
+        db.run(updateSql, [createdAt, topicId], (err) => {callback(err);});
+    });
 }
+
 
 app.post('/conversations', (req, res) => {
     const conversation = req.body;
@@ -145,9 +154,9 @@ app.delete('/conversations/:conversationId', (req, res) => {
 
 
 function addTopic(topic, callback) {
-    const { id, name, createdAt, encApiKey } = topic;
-    const sql = `INSERT INTO topics (id, name, createdAt, encApiKey) VALUES (?, ?, ?, ?)`;
-    db.run(sql, [id, name, createdAt, encApiKey], (err) => {callback(err);});
+    const { id, name, modifiedAt, encApiKey } = topic;
+    const sql = `INSERT INTO topics (id, name, modifiedAt, encApiKey) VALUES (?, ?, ?, ?)`;
+    db.run(sql, [id, name, modifiedAt, encApiKey], (err) => {callback(err);});
 }
 
 app.post('/topics', (req, res) => {

@@ -3,7 +3,7 @@ const BASE_URL = `/api/db`;
 export interface Topic {
     id: string;
     name: string;
-    createdAt: number;
+    modifiedAt: number;
     encApiKey: string;
 }
 
@@ -28,7 +28,7 @@ export class ChatService {
                 const topics: Topic[] = data.map((item: any) => ({
                     id: item.id,
                     name: item.name,
-                    createdAt: item.createdAt,
+                    modifiedAt: item.modifiedAt,
                     encApiKey: item.encApiKey,
                 }));
                 return topics;
@@ -51,7 +51,7 @@ export class ChatService {
                 const topic: Topic = {
                     id: data.id,
                     name: data.name,
-                    createdAt: data.createdAt,
+                    modifiedAt: data.modifiedAt,
                     encApiKey: data.encApiKey,
                 };
                 return topic;

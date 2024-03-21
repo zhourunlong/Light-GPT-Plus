@@ -227,7 +227,6 @@ const MessageItem: React.FC<{
                                 __html: renderMarkdown(message),
                             }}
                         ></div>
-                        //<div className={styles.content}>{message}</div>
                     )}
                     <div className={styles.placeholder}></div>
                 </>

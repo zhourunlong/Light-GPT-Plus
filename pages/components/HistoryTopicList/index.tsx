@@ -46,7 +46,7 @@ const HistoryTopicList: React.FC<{
         const newTopic: Topic = {
             id: topicId,
             name: newTopicName,
-            createdAt: Date.now(),
+            modifiedAt: Date.now(),
             encApiKey: encApiKeyHeader + encApiKey,
         };
 
@@ -79,13 +79,13 @@ const HistoryTopicList: React.FC<{
 
     useEffect(() => {
         const init = async () => {
-            const topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
+            let topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
             setHistoryTopicList(topics);
 
-            // TODO: When first time changing to a new api key, the old topics are still shown.
             if (topics.length === 0) {
                 generateTopic();
-                return;
+                topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
+                setHistoryTopicList(topics);
             }
 
             updateActiveTopicId(topics[0].id);
@@ -100,10 +100,10 @@ const HistoryTopicList: React.FC<{
         init();
     }, [
         encApiKey,
-        updateActiveTopicId,
-        updateCurrentMessageList,
-        hideMask,
-        showMask,
+        // updateActiveTopicId,
+        // updateCurrentMessageList,
+        // hideMask,
+        // showMask,
     ]);
 
     const [editingTopicName, setEditingTopicName] = useState(false);

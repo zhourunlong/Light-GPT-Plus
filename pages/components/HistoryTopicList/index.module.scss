@@ -49,16 +49,11 @@
             position: relative;
             &.active {
                 background-color: var(--side-menu-active-bg);
-                color: var(--side-menu-active-text-color);
                 .action {
                     opacity: 1;
                 }
-                i {
-                    color: var(--side-menu-active-text-color);
-                }
             }
             i {
-                color: var(--aside-text-color);
                 margin-right: 10px;
             }
 

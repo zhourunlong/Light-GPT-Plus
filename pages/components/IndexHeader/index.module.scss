@@ -8,30 +8,59 @@
     padding: 20px;
     
     .modelSelector {
-        flex: 1;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-size: 18px;
+      
+      .selectedModel {
+        padding: 8px;
+        border-radius: 4px;
+        background-color: var(--body-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-color-normal);
+        cursor: pointer;
+        user-select: none; /* Prevent text selection */
+      }
+      
+      .dropdown {
+        position: absolute;
+        background-color: var(--light-bg-color);
+        box-shadow: var(--shadow); /* Fixed shadow color as dark mode does not need it */
+        z-index: 10; /* Ensure the dropdown appears above other content */
+        border-radius: 4px;
+        overflow: hidden; /* Ensures the border-radius applies to child elements */
+        width: 300px; /* Set the width of the selected model display */
+      }
+      
+      .dropdownItem {
+        padding: 8px;
+        border-bottom: 1px solid var(--border-color); /* Visual separation of items */
+        cursor: pointer;
+        color: var(--text-color-normal);
         display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: flex-start;
-        font-size: 12px;
-        select {
-            padding: 8px;
-            border-radius: 4px;
-            background-color: white;
-            border: 1px solid var(--border-color, #ccc); // Use CSS variable or fallback
-            color: var(--text-color, #333); // Use CSS variable or fallback
-            font-size: 1rem;
-            cursor: pointer;
-            &:focus {
-                outline: none;
-                border-color: var(--primary-color, blue); // Highlight with primary color on focus
-            }
-        }
-        label {
-            margin-bottom: 5px;
+        flex-direction: column; /* Arrange content in two rows */
+
+        .modelName {
             font-weight: bold;
-            color: var(--text-color-normal);
         }
+        
+        .modelDescription {
+            font-weight: normal;
+            color: var(--text-color-light);
+            font-size: 14px; /* Smaller text for the description */
+        }
+      }
+
+      .dropdownItem:last-child {
+        border-bottom: none; /* Remove bottom border for the last item */
+      }
+      
+      .dropdownItem:hover {
+        background-color: var(--extra-light-bg-color); /* Hover state */
+      }
     }
 
     .siteIntroduction {

@@ -463,7 +463,8 @@
 .app[data-theme='light'] {
     --body-bg: #ffffff;
     --theme-color: #fb873c;
-    --light-bg-color: #f7f8fb;
+    --light-bg-color: #fcfcfc;
+    --extra-light-bg-color: rgb(233,233,233);
     --text-color-normal: #3d4452;
     --text-color-dark: #1a202b;
     --text-color-light: #a1a6b1;
@@ -473,16 +474,16 @@
     --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     --white: #fff;
     --black: #000;
-    --aside-bg: #f5f5f5;
-    --aside-text-color: #333333;
-    --side-menu-active-bg: #0072c6;
-    --side-menu-active-text-color: #ffffff;
+    --aside-bg: rgb(248,248,248);
+    --aside-text-color: rgb(15,15,15);
+    --side-menu-active-bg: rgb(198,198,198);
 }
 
 .app[data-theme='dark'] {
-    --body-bg: #12181b;
+    --body-bg: rgb(30,30,30);
     --theme-color: #fb873c;
-    --light-bg-color: #1f2529;
+    --light-bg-color: rgb(41,41,41);
+    --extra-light-bg-color: rgb(58,58,58);
     --text-color-normal: #c2c3c7;
     --text-color-dark: #ebebec;
     --text-color-light: #929399;
@@ -492,8 +493,7 @@
     --shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
     --white: #fff;
     --black: #000;
-    --aside-bg: #1f2427;
-    --aside-text-color: #f5f5f5;
-    --side-menu-active-bg: #6c7a89;
-    --side-menu-active-text-color: #ffffff;
+    --aside-bg: rgb(23,23,23);
+    --aside-text-color: rgb(223,223,223);
+    --side-menu-active-bg: rgb(41,41,41);
 }

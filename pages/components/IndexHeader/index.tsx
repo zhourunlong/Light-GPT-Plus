@@ -1,8 +1,11 @@
-import React from 'react';
+import { React, useState } from 'react';
 
 import { Theme } from '../../../interface';
 
 import styles from './index.module.scss';
+
+import { Models } from "../../../utils";
+
 
 const IndexHeader: React.FC<{
     theme: Theme;
@@ -11,19 +14,39 @@ const IndexHeader: React.FC<{
     setSelectedModel: (model: string) => void;
 } > = ({selectedModel, setSelectedModel}) => {
 
+    const ModelSelector = ({ selectedModel, setSelectedModel }) => {
+        const [isOpen, setIsOpen] = useState(false);
+      
+        const handleSelect = (modelId) => {
+          setSelectedModel(modelId);
+          setIsOpen(false); // Close the dropdown after selection
+        };
+      
+        return (
+          <div className={styles.modelSelector}>
+            <div className={styles.selectedModel} onClick={() => setIsOpen(!isOpen)}>
+              {<strong>{Models.find(model => model.id === selectedModel)?.name}</strong> || 'Select a model'}
+            </div>
+            {isOpen && (
+              <div className={styles.dropdown}>
+                {Models.map((model) => (
+                    <div key={model.id} className={styles.dropdownItem} onClick={() => handleSelect(model.id)}>
+                    <div className={styles.modelName}>{model.name}</div>
+                    <div className={styles.modelDescription}>{model.description}</div>
+                    </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+    };
+
     return (
         <div className={styles.headerContainer}>
-            <div className={styles.modelSelector}>
-                <select
-                    id="modelSelect"
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                >
-                    <option value="gpt-4-turbo-preview">GPT-4 Turbo</option>
-                    <option value="gpt-4">GPT-4</option>
-                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                </select>
-            </div>
+            <ModelSelector
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+            />
 
             <div className={styles.siteIntroduction}>
                 <div className={styles.title}>

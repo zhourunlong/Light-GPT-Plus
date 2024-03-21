@@ -136,20 +136,16 @@ export const APIKeyLocalKey = 'light_gpt_api_key';
 // You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Knowledge cutoff: 2022-01 Current date: 2024-02-22
 
 
-
-const ModelName: Record<string, string> = {
-    "gpt-3": "GPT-3.5",
-    "gpt-4": "GPT-4",
-};
-
-const CutOffDate: Record<string, string> = {
-    "gpt-3": "2022-01",
-    "gpt-4": "2023-04",
-}
+export const Models = [
+    { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'High-speed version with optimized performance.', cutOffDate: '2023-04' },
+    { id: 'gpt-4', name: 'GPT-4', description: 'The fourth generation model offering balanced performance.', cutOffDate: '2023-04' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Efficient version of GPT-3.5 with faster responses.', cutOffDate: '2022-01' },
+];
 
 export const ChatSystemMessage = (modelFullName: string) => {
-    const model = modelFullName.slice(0, 5);
-    return `You are ChatGPT, a large language model trained by OpenAI, based on the ${ModelName[model]} architecture. Knowledge cutoff: ${CutOffDate[model]} Current date: ${getCurrentDate()}`;
+    const modelName = Models.find(model => model.id === modelFullName)?.name || modelFullName;
+    const cutOffDate = Models.find(model => model.id === modelFullName)?.cutOffDate || '2022-01';
+    return `You are ChatGPT, a large language model trained by OpenAI, based on the ${modelName} architecture. Knowledge cutoff: ${cutOffDate} Current date: ${getCurrentDate()}`;
 }
 
 export const SummarizePrompt = "Summarize a topic for the following message in 5 words. Output only the topic content.\n\n----- Message -----\n";

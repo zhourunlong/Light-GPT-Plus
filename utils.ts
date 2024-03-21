@@ -131,10 +131,6 @@ function getCurrentDate(): string {
 export const ThemeLocalKey = 'light_gpt_theme';
 export const APIKeyLocalKey = 'light_gpt_api_key';
 
-// TODO: Modify the system message like below, with fillable model name and current data.
-
-// You are ChatGPT, a large language model trained by OpenAI, based on the GPT-3.5 architecture. Knowledge cutoff: 2022-01 Current date: 2024-02-22
-
 
 export const Models = [
     { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'Enhanced with 128k context and fresher knowledge, it\'s more powerful and affordable than GPT-4.', cutOffDate: '2023-12' },

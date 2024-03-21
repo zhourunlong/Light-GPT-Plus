@@ -83,6 +83,7 @@ const HistoryTopicList: React.FC<{
             setHistoryTopicList(topics);
 
             if (topics.length === 0) {
+                // TODO: This may result in messages not stored in the database
                 generateTopic();
                 topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
                 setHistoryTopicList(topics);

@@ -27,6 +27,7 @@
       
       .dropdown {
         position: absolute;
+        margin-top: 50px; /* Add space between .selectedModel and .dropdown */
         background-color: var(--light-bg-color);
         box-shadow: var(--shadow); /* Fixed shadow color as dark mode does not need it */
         z-index: 10; /* Ensure the dropdown appears above other content */

@@ -81,6 +81,8 @@ export default function Home() {
     const [apiKey, setApiKey] = useState('');
     const [encryptedApiKey, setEncryptedApiKey] = useState('');
 
+    const [lastTimeStamp, setLastTimeStamp] = useState(0);
+
     const chatHistoryEle = useRef<HTMLDivElement | null>(null);
 
     function newSystemMessageItem(systemMessage: string): IMessage {
@@ -109,6 +111,22 @@ export default function Home() {
           createdAt: Date.now(),
         };
     }
+
+    const archiveCurrentAssistantMessage = (newCurrentAssistantMessage: string) => {
+        if (newCurrentAssistantMessage) {
+            const assistantMessageItem = newAssistantMessageItem(newCurrentAssistantMessage);
+            setMessageList((list) => list.concat([assistantMessageItem]));
+            if (activeTopicId) {
+                chatDB.addConversation({
+                    topicId: activeTopicId,
+                    ...assistantMessageItem,
+                });
+            }
+            setLoadingTopicId('');
+            setCurrentAssistantMessage('');
+            scrollSmoothThrottle();
+        }
+    };
 
     const [messageList, setMessageList] = useState<IMessage[]>([]);
 
@@ -227,6 +245,7 @@ export default function Home() {
                         topicId: activeTopicId,
                         ...userMessageItem,
                     });
+                    setLastTimeStamp(userMessageItem.createdAt);
                 }
             } else {
                 let idsToDelete = [];
@@ -263,6 +282,7 @@ export default function Home() {
                     topicId: activeTopicId,
                     ...userMessageItem,
                 });
+                setLastTimeStamp(userMessageItem.createdAt);
 
                 // Summarize the sentence in 5 words or fewer for the topic name
                 if (newMessageList.length === 2) {
@@ -337,7 +357,7 @@ export default function Home() {
                     response += chunk.choices[0]?.delta?.content || "";
                     setCurrentAssistantMessage(response);
                 }
-                archiveCurrentMessage(response);
+                archiveCurrentAssistantMessage(response);
             }
 
             apiRequestRateLimit.current.requestsThisMinute += 1;
@@ -351,22 +371,6 @@ export default function Home() {
             setLoadingTopicId('');
 
             setServiceErrorMessage(error?.message || 'Unknown Service Error');
-        }
-    };
-
-    const archiveCurrentMessage = (newCurrentAssistantMessage: string) => {
-        if (newCurrentAssistantMessage) {
-            const assistantMessageItem = newAssistantMessageItem(newCurrentAssistantMessage);
-            setMessageList((list) => list.concat([assistantMessageItem]));
-            if (activeTopicId) {
-                chatDB.addConversation({
-                    topicId: activeTopicId,
-                    ...assistantMessageItem,
-                });
-            }
-            setLoadingTopicId('');
-            setCurrentAssistantMessage('');
-            scrollSmoothThrottle();
         }
     };
 
@@ -426,12 +430,12 @@ export default function Home() {
                     <HistoryTopicList
                         historyTopicListVisible={asideVisible}
                         encApiKey={encryptedApiKey}
-                        currentMessageList={messageList}
                         updateCurrentMessageList={updateCurrentMessageList}
                         activeTopicId={activeTopicId}
                         updateActiveTopicId={updateActiveTopicId}
                         activeTopicName={activeTopicName}
                         updateActiveTopicName={updateActiveTopicName}
+                        lastTimeStamp={lastTimeStamp}
                         showMask={showMask}
                         hideMask={hideMask}
                     />

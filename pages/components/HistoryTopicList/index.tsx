@@ -13,23 +13,23 @@ const chatDB = new ChatService();
 const HistoryTopicList: React.FC<{
     historyTopicListVisible: boolean;
     encApiKey: string;
-    currentMessageList: IMessage[];
     updateCurrentMessageList: (messages: IMessage[]) => void;
     activeTopicId: string;
     updateActiveTopicId: (id: string) => void;
     activeTopicName: string;
     updateActiveTopicName: (name: string) => void;
+    lastTimeStamp: number;
     showMask: () => void;
     hideMask: () => void;
 }> = ({
     historyTopicListVisible,
     encApiKey,
-    currentMessageList,
     updateCurrentMessageList,
     activeTopicId,
     updateActiveTopicId,
     activeTopicName,
     updateActiveTopicName,
+    lastTimeStamp,
     showMask,
     hideMask,
 }) => {
@@ -91,19 +91,16 @@ const HistoryTopicList: React.FC<{
             updateActiveTopicId(topics[0].id);
 
             showMask();
-            const currentMessageList = await chatDB.getConversationsByTopicId(
+            const newCurrentMessageList = await chatDB.getConversationsByTopicId(
                 topics[0].id
             );
-            updateCurrentMessageList(currentMessageList as IMessage[]);
+            updateCurrentMessageList(newCurrentMessageList as IMessage[]);
             hideMask();
         };
         init();
     }, [
         encApiKey,
-        // updateActiveTopicId,
-        // updateCurrentMessageList,
-        // hideMask,
-        // showMask,
+        lastTimeStamp,
     ]);
 
     const [editingTopicName, setEditingTopicName] = useState(false);
@@ -123,7 +120,6 @@ const HistoryTopicList: React.FC<{
                     !historyTopicListVisible && styles.hide
                 }`}
                 onClick={() => {
-                    // 新建对话
                     generateTopic();
                 }}
             >
@@ -149,12 +145,12 @@ const HistoryTopicList: React.FC<{
 
                                     showMask();
                             
-                                    const currentMessageList =
+                                    const newCurrentMessageList =
                                         await chatDB.getConversationsByTopicId(
                                             item.id
                                         );
                                     updateCurrentMessageList(
-                                        currentMessageList as IMessage[]
+                                        newCurrentMessageList as IMessage[]
                                     );
 
                                     hideMask();

@@ -17,7 +17,37 @@ import 'highlight.js/styles/atom-one-dark.css';
 
 Highlightjs.registerLanguage('regex', regex);
 
+function replaceEquationDelimiters(inputString: string) {
+    // Split input into code and non-code blocks
+    const blocks = inputString.split(/(```[\s\S]*?```)/);
+
+    // Regular expression to match paired brackets outside code blocks
+    const inlineRegex = /\\\(.*?\\\)/g, displayRegex = /\\\[.*?\\\]/g;
+
+    let replacedString = "";
+
+    // Iterate over non-code blocks and replace paired brackets with Markdown
+    for (let i = 0; i < blocks.length; i++) {
+        if (i % 2 === 0) {
+            let blockMatches = blocks[i].match(inlineRegex);
+            if (blockMatches) {
+                blocks[i] = blocks[i].replace(inlineRegex, (match) => `\$${match.slice(2, -2)}\$`);
+            }
+
+            blockMatches = blocks[i].match(displayRegex);
+            if (blockMatches) {
+                blocks[i] = blocks[i].replace(displayRegex, (match) => `\$\$${match.slice(2, -2)}\$\$`);
+            }
+        }
+        replacedString += blocks[i];
+    }
+
+    return replacedString;
+}
+
 function renderMarkdown(message: string) {
+    message = replaceEquationDelimiters(message);
+
     const md = MarkdownIt()
         .use(MdHighlight, {
             hljs: Highlightjs,
@@ -38,6 +68,7 @@ function renderMarkdown(message: string) {
     };
     return md.render(message || '');
 };
+
 
 const MessageEditor: React.FC<{
     id: string;
@@ -224,7 +255,7 @@ const MessageItem: React.FC<{
                         <div
                             className={styles.htmlContent}
                             dangerouslySetInnerHTML={{
-                                __html: renderMarkdown(message),
+                                __html: renderMarkdown("```regex\n" + message + "\n```")
                             }}
                         ></div>
                     )}

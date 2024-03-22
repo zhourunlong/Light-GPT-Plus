@@ -484,8 +484,7 @@ export default function Home() {
             <main className={styles.conversationContent}>
                 {/** toggle aside button */}
                 <div
-                    className={`${styles.asideToggle} ${
-                        asideVisible && styles.asideShow
+                    className={`${styles.asideToggle} ${styles.asideShow
                     }`}
                     onClick={toggleAsideVisible}
                 >

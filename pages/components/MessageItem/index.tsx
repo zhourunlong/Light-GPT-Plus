@@ -255,7 +255,7 @@ const MessageItem: React.FC<{
                         <div
                             className={styles.htmlContent}
                             dangerouslySetInnerHTML={{
-                                __html: renderMarkdown("```regex\n" + message + "\n```")
+                                __html: renderMarkdown(message)
                             }}
                         ></div>
                     )}

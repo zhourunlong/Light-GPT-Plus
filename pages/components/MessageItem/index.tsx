@@ -31,12 +31,12 @@ function replaceEquationDelimiters(inputString: string) {
         if (i % 2 === 0) {
             let blockMatches = blocks[i].match(inlineRegex);
             if (blockMatches) {
-                blocks[i] = blocks[i].replace(inlineRegex, (match) => `\$${match.slice(2, -2)}\$`);
+                blocks[i] = blocks[i].replace(inlineRegex, (match) => `\$${match.slice(2, -2).trim()}\$`);
             }
 
             blockMatches = blocks[i].match(displayRegex);
             if (blockMatches) {
-                blocks[i] = blocks[i].replace(displayRegex, (match) => `\$\$${match.slice(2, -2)}\$\$`);
+                blocks[i] = blocks[i].replace(displayRegex, (match) => `\$\$${match.slice(2, -2).trim()}\$\$`);
             }
         }
         replacedString += blocks[i];

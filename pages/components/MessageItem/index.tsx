@@ -53,12 +53,12 @@ function renderMarkdown(message: string) {
             hljs: Highlightjs,
         })
         .use(MdKatex);
-    const fence = md.renderer.rules.fence;
-    if (!fence) return '';
+    const originalFence = md.renderer.rules.fence;
+    if (!originalFence) return '';
     md.renderer.rules.fence = (...args) => {
         const [tokens, idx] = args;
         const token = tokens[idx];
-        const rawCode = fence(...args);
+        const rawCode = originalFence(...args);
         return `<div class='highlight-js-pre-container'>
     <div id class="copy" data-code=${encodeURIComponent(token.content)}>
     <i class="fa fa-clipboard" aria-hidden="true"></i>
@@ -66,6 +66,15 @@ function renderMarkdown(message: string) {
     ${rawCode}
     </div>`;
     };
+
+    const originalCodeInline = md.renderer.rules.code_inline;
+    if (!originalCodeInline) return '';
+    md.renderer.rules.code_inline = (...args) => {
+        const [tokens, idx] = args;
+        const token = tokens[idx];
+        return `<code class="${styles.inlineCode}">${md.utils.escapeHtml(token.content)}</code>`;
+    };
+
     return md.render(message || '');
 };
 

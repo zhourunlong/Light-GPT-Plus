@@ -3,7 +3,7 @@ const db = new sqlite3.Database('./ChatDatabase.db', (err) => {
     if (err) {
         console.error(err.message);
     }
-    console.log('Connected to the ChatDatabase database.');
+    // console.log('Connected to the ChatDatabase database.');
 });
 
 db.serialize(() => {
@@ -46,14 +46,14 @@ function getTopics(encApiKey, callback) {
 
 app.get('/topics/by-apikey/:encApiKey', (req, res) => {
     const { encApiKey } = req.params;
-    console.log('Fetching topics with encApiKey:', encApiKey);
+    // console.log('Fetching topics with encApiKey:', encApiKey);
     getTopics(encApiKey, (err, topics) => {
         if (err) {
             console.error('Error fetching topics:', err);
             res.sendStatus(500);
         } else {
             const topicIds = topics.map(topic => topic.id.slice(0, 5));
-            console.log(topicIds);
+            // console.log(topicIds);
 
             res.json(topics);
         }
@@ -68,7 +68,7 @@ function getTopicById(topicId, callback) {
 
 app.get('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
-    console.log('Fetching topic:', topicId.slice(0, 5));
+    // console.log('Fetching topic:', topicId.slice(0, 5));
     getTopicById(topicId, (err, topic) => {
         if (err) {
             console.error('Error fetching topic:', err);
@@ -91,7 +91,7 @@ function getConversationsByTopicId(topicId, callback) {
 
 app.get('/topics/by-id/:topicId/conversations', (req, res) => {
     const { topicId } = req.params;
-    console.log('Fetching conversations for topic:', topicId.slice(0, 5));
+    // console.log('Fetching conversations for topic:', topicId.slice(0, 5));
     getConversationsByTopicId(topicId, (err, conversations) => {
         if (err) {
             console.error('Error fetching conversations:', err);
@@ -120,7 +120,7 @@ function addConversation(conversation, callback) {
 
 app.post('/conversations', (req, res) => {
     const conversation = req.body;
-    console.log(`Adding conversation ${conversation.id.slice(0, 5)} to topic ${conversation.topicId.slice(0, 5)}`);
+    // console.log(`Adding conversation ${conversation.id.slice(0, 5)} to topic ${conversation.topicId.slice(0, 5)}`);
     addConversation(conversation, (err) => {
         if (err) {
             console.error('Error adding conversation:', err);
@@ -141,7 +141,7 @@ function deleteConversationById(conversationId, callback) {
 
 app.delete('/conversations/:conversationId', (req, res) => {
     const { conversationId } = req.params;
-    console.log('Deleting conversation:', conversationId.slice(0, 5));
+    // console.log('Deleting conversation:', conversationId.slice(0, 5));
     deleteConversationById(conversationId, (err) => {
         if (err) {
             console.error('Error deleting conversation:', err);
@@ -161,7 +161,7 @@ function addTopic(topic, callback) {
 
 app.post('/topics', (req, res) => {
     const topicData = req.body;
-    console.log('Adding topic: ', topicData.id.slice(0, 5));
+    // console.log('Adding topic: ', topicData.id.slice(0, 5));
     addTopic(topicData, (err) => {
         if (err) {
             console.error('Error adding topic:', err);
@@ -190,7 +190,7 @@ function deleteTopicById(topicId, callback) {
 
 app.delete('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
-    console.log('Deleting topic:', topicId.slice(0, 5));
+    // console.log('Deleting topic:', topicId.slice(0, 5));
     deleteTopicById(topicId, (err) => {
         if (err) {
             console.error('Error deleting topic:', err);
@@ -210,7 +210,7 @@ function updateTopicNameById(topicId, name, callback) {
 app.patch('/topics/by-id/:topicId', (req, res) => {
     const { topicId } = req.params;
     const { name } = req.body;
-    console.log('Updating topic name:', topicId.slice(0, 5), name);
+    // console.log('Updating topic name:', topicId.slice(0, 5), name);
     updateTopicNameById(topicId, name, (err) => {
         if (err) {
             console.error('Error updating topic name:', err);

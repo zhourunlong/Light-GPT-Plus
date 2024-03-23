@@ -35,7 +35,7 @@ app.prepare().then(() => {
     );
 
     server.all('*', (req, res) => {
-        console.log('Handling request:', req.method, req.path);
+        // console.log('Handling request:', req.method, req.path);
         return handle(req, res);
     });
 

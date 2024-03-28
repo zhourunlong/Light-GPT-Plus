@@ -79,6 +79,7 @@ const HistoryTopicList: React.FC<{
 
     useEffect(() => {
         const init = async () => {
+            // TODO: Initially display key="", fix this
             let topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
             setHistoryTopicList(topics);
 

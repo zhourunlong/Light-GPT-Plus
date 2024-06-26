@@ -25,6 +25,7 @@ import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 import { ChatService } from '../DBClient';
 
 import OpenAI from 'openai';
+import { OpenAIClient, AzureKeyCredential } from "@azure/openai";
 
 import {
     PORT,
@@ -189,11 +190,17 @@ export default function Home() {
     const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
    
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
-        const openai = new OpenAI({
-            baseURL: window.location.href + "api/openai",
-            apiKey: apiKey,
-            dangerouslyAllowBrowser: true,
-        });
+        // const openai = new OpenAI({
+        //     baseURL: window.location.href + "api/openai",
+        //     apiKey: apiKey,
+        //     dangerouslyAllowBrowser: true,
+        // });
+        
+        const openai = new OpenAIClient(
+            window.location.href + "api/openai",
+            new AzureKeyCredential(apiKey),
+            { allowInsecureConnection: true }
+        );
 
         // api request rate limit
         const now = Date.now();
@@ -286,9 +293,12 @@ export default function Home() {
 
                 // Summarize the sentence in 5 words or fewer for the topic name
                 if (newMessageList.length === 2) {
-                    const response = await openai.chat.completions.create({
-                        model: selectedModel,
-                        messages: [
+                    // const response = await openai.chat.completions.create({
+                    const response = await openai.getChatCompletions(
+                        // model: selectedModel,
+                        selectedModel,
+                        // messages:
+                        [
                             {
                                 role: ERole.system,
                                 content: ChatSystemMessage(selectedModel),
@@ -298,10 +308,11 @@ export default function Home() {
                                 content: SummarizePrompt + newMessageList[1].content.slice(0, 300) + '...',
                             },
                         ],
-                        temperature: 0.7,
-                        top_p: 0.9,
-                        stream: false,
-                    });
+                        // temperature: 0.7,
+                        // top_p: 0.9,
+                        // stream: false,
+                    //});
+                    );
                     
                     const tempTopicName = response.choices[0]?.message?.content || "";
 
@@ -341,16 +352,20 @@ export default function Home() {
                 //     scrollSmoothThrottle();
                 // }, 2000);
             } else {            
-                const stream = await openai.chat.completions.create({
-                    model: selectedModel,
-                    messages: newMessageList.map((item) => ({
+                // const stream = await openai.chat.completions.create({
+                const stream = await openai.streamChatCompletions(
+                    // model:
+                    selectedModel,
+                    // messages:
+                    newMessageList.map((item) => ({
                         role: item.role,
                         content: item.content,
                     })),
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    stream: true,
-                });
+                    // temperature: 0.7,
+                    // top_p: 0.9,
+                    // stream: true,
+                //}
+                );
             
                 response = "";
                 for await (const chunk of stream) {

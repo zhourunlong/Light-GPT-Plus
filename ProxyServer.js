@@ -10,7 +10,8 @@ const handle = app.getRequestHandler();
 const PORT = 3000;
 const DB_SERVER_PORT = 3456;
 // const OPENAI_SERVER = 'http://192.168.1.2:1234';
-const OPENAI_SERVER = 'https://api.openai.com';
+// const OPENAI_SERVER = 'https://api.openai.com';
+const OPENAI_SERVER = 'https://gcrendpoint.azurewebsites.net';
 
 
 app.prepare().then(() => {
@@ -30,7 +31,8 @@ app.prepare().then(() => {
         createProxyMiddleware({
             target: OPENAI_SERVER,
             changeOrigin: true,
-            pathRewrite: {'^/api/openai' : '/v1'},
+            // pathRewrite: {'^/api/openai' : '/v1'},
+            pathRewrite: {'^/api/openai' : ''},
         })
     );
 

@@ -132,16 +132,32 @@ export const ThemeLocalKey = 'light_gpt_theme';
 export const APIKeyLocalKey = 'light_gpt_api_key';
 
 
-export const Models = [
-    { id: 'gpt-4-turbo-preview', name: 'GPT-4 Turbo', description: 'Enhanced with 128k context and fresher knowledge, it\'s more powerful and affordable than GPT-4.', cutOffDate: '2023-12' },
-    { id: 'gpt-4', name: 'GPT-4', description: 'Proficient in various domains, excelling in complex problem-solving using natural language.', cutOffDate: '2021-09' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Cost-effective models with impressive capabilities for diverse tasks.', cutOffDate: '2021-09' },
+export const TextModels = [
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', reasoning: false, description: '', cutOffDate: '2023-12' },
+    { id: 'gpt-4o', name: 'GPT-4o', reasoning: false, description: '', cutOffDate: '2023-10' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o mini', reasoning: false, description: '', cutOffDate: '2023-10' },
+    { id: 'o1-mini', name: 'o1 mini', reasoning: true, description: '', cutOffDate: '2023-10' },
+];
+// TODO: add GPT-4o
+
+export const ImageModels = [
+    { id: 'dall-e-3', name: 'DALL·E 3', description: ''},
+    { id: 'dall-e-2', name: 'DALL·E 2', description: ''},
 ];
 
-export const ChatSystemMessage = (modelFullName: string) => {
-    const modelName = Models.find(model => model.id === modelFullName)?.name || modelFullName;
-    const cutOffDate = Models.find(model => model.id === modelFullName)?.cutOffDate || 'Unknown';
-    return `You are ChatGPT, a large language model trained by OpenAI, based on the ${modelName} architecture. Knowledge cutoff: ${cutOffDate} Current date: ${getCurrentDate()}`;
+export const Models = [...TextModels, ...ImageModels];
+
+export const GetAttributes = (modelId: string) => {
+    const idx = TextModels.findIndex(model => model.id === modelId);
+    if (idx == -1) {
+        return { id: modelId, name: modelId, reasoning: false, description: '', cutOffDate: 'Unknown' };
+    }
+    return TextModels[idx];
+}
+
+export const ChatSystemMessage = (modelId: string) => {
+    const attributes = GetAttributes(modelId);
+    return `You are ChatGPT, a large language model trained by OpenAI, based on the ${attributes.name} architecture. Knowledge cutoff: ${attributes.cutOffDate} Current date: ${getCurrentDate()}`;
 }
 
 export const SummarizePrompt = "Summarize a topic for the following message in 5 words. Output only the topic content.\n\n----- Message -----\n";

@@ -24,6 +24,8 @@ import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 
 import { ChatService } from '../DBClient';
 
+import { ImageModels } from "../utils";
+
 import OpenAI from 'openai';
 
 import {
@@ -33,7 +35,8 @@ import {
     encrypt,
     decrypt,
     ChatSystemMessage,
-    SummarizePrompt
+    GetAttributes,
+    SummarizePrompt,
 } from '../utils';
 
 const chatDB = new ChatService();
@@ -186,7 +189,7 @@ export default function Home() {
         lastRequestTime: 0,
     });
 
-    const [selectedModel, setSelectedModel] = useState('gpt-4-turbo-preview'); // Default model
+    const [selectedModel, setSelectedModel] = useState('gpt-4-turbo'); // Default model
    
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
         const openai = new OpenAI({
@@ -210,7 +213,7 @@ export default function Home() {
         }
 
         if (!apiKey) {
-            setServiceErrorMessage('Please set API KEY');
+            setServiceErrorMessage('Please set API key.');
             setActiveSystemMenu(SystemSettingMenu.apiKeySettings);
             return;
         }
@@ -218,9 +221,11 @@ export default function Home() {
         // 先把用户输入信息展示到对话列表
         const currentUserMessage = userPromptRef.current?.value || '';
         if (!isRegenerate && !currentUserMessage) {
-            setServiceErrorMessage('Please enter your question!');
+            setServiceErrorMessage('Please enter your message.');
             return;
         }
+
+        const isGenerateImage = ImageModels.findIndex(model => model.id === selectedModel) != -1;
 
         let newMessageList = messageList.concat([]);
         if (isRegenerate) {
@@ -264,7 +269,8 @@ export default function Home() {
             }
         } else {
             // Add system message at the first step
-            if (newMessageList.length === 0) {
+            const attributes = GetAttributes(selectedModel);
+            if (newMessageList.length === 0 && !(attributes.reasoning)) {
                 const systemMessageItem = newSystemMessageItem(ChatSystemMessage(selectedModel));
                 newMessageList.push(systemMessageItem);
                 if (activeTopicId) {
@@ -285,21 +291,22 @@ export default function Home() {
                 setLastTimeStamp(userMessageItem.createdAt);
 
                 // Summarize the sentence in 5 words or fewer for the topic name
-                if (newMessageList.length === 2) {
+                if (newMessageList.length <= 2) {
+                    const summarizeModel = "gpt-3.5-turbo";
                     const response = await openai.chat.completions.create({
-                        model: selectedModel,
+                        model: summarizeModel,
                         messages: [
                             {
                                 role: ERole.system,
-                                content: ChatSystemMessage(selectedModel),
+                                content: ChatSystemMessage(summarizeModel),
                             },
                             {
-                                role: newMessageList[1].role,
-                                content: SummarizePrompt + newMessageList[1].content.slice(0, 300) + '...',
+                                role: newMessageList[-1].role,
+                                content: SummarizePrompt + newMessageList[-1].content.slice(0, 300) + '...',
                             },
                         ],
-                        temperature: 0.7,
-                        top_p: 0.9,
+                        // temperature: 0.7, TODO:
+                        // top_p: 0.9,
                         stream: false,
                     });
                     
@@ -317,42 +324,44 @@ export default function Home() {
         if (!userPromptRef.current) return;
         userPromptRef.current.style.height = 'auto';
         scrollSmoothThrottle();
-
-        // const prompt = newMessageList[newMessageList.length - 1].content;
         
         // TODO: support image generation
-        const isGenerateImage = false;
 
         // get response
         try {
             setServiceErrorMessage('');
             setLoadingTopicId(activeTopicId);
 
-            //let response: Response;
-            let response: string;
             if (isGenerateImage) {
-                // response = await generateImageWithText(
-                //     apiKey,
-                //     prompt,
-                // );
-                // const generateImgInfo = await response.json();
-                // archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
-                // setTimeout(() => {
-                //     scrollSmoothThrottle();
-                // }, 2000);
-            } else {            
+                const userMessages = newMessageList.filter((item) => item.role === ERole.user);
+                const prompt = '\n'.concat(...userMessages);
+                response = await openai.images.generate({
+                    model: selectedModel,
+                    prompt: prompt,
+                    size: "1024×1024",
+                    response_format: "b64_json",
+                    quality: 'standard',
+                    style: 'natural',
+                })
+                const generateImgInfo = await response.json();
+                archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
+                setTimeout(() => {
+                    scrollSmoothThrottle();
+                }, 2000);
+            } else {
                 const stream = await openai.chat.completions.create({
                     model: selectedModel,
+                    // reasoning_effort: "medium", TODO: set this as a parameter
                     messages: newMessageList.map((item) => ({
                         role: item.role,
                         content: item.content,
                     })),
-                    temperature: 0.7,
-                    top_p: 0.9,
+                    // temperature: 0.7, TODO
+                    // top_p: 0.9,
                     stream: true,
                 });
             
-                response = "";
+                let response = "";
                 for await (const chunk of stream) {
                     response += chunk.choices[0]?.delta?.content || "";
                     setCurrentAssistantMessage(response);

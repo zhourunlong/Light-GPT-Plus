@@ -521,42 +521,6 @@ export default function Home() {
                     ...userMessageItem,
                 });
                 setLastTimeStamp(userMessageItem.createdAt);
-
-                // Summarize the sentence in 5 words or fewer for the topic name
-                if (newMessageList.length <= 2) {
-                    const summarizeModel = 'gpt-5-mini';
-                    const latestMessage = newMessageList[newMessageList.length - 1];
-                    if (latestMessage) {
-                        void (async () => {
-                            try {
-                                const summaryJson = await openai.responses.create({
-                                    model: summarizeModel,
-                                    reasoning: { effort: 'low' },
-                                    input: [
-                                        {
-                                            role: ERole.system,
-                                            content: ChatSystemMessage(summarizeModel),
-                                        },
-                                        {
-                                            role: latestMessage.role,
-                                            content:
-                                                SummarizePrompt +
-                                                latestMessage.content.slice(0, 300) +
-                                                '...',
-                                        },
-                                    ],
-                                });
-                                const tempTopicName = extractResponseText(summaryJson);
-
-                                if (tempTopicName !== '') {
-                                    updateActiveTopicName(tempTopicName);
-                                }
-                            } catch (err) {
-                                console.error('Failed to summarize topic', err);
-                            }
-                        })();
-                    }
-                }
             }
         }
 
@@ -628,6 +592,90 @@ export default function Home() {
     const updateActiveTopicName = useCallback((name: string) => {
         setActiveTopicName(name);
     }, []);
+
+    const firstUserMessageContentRef = useRef('');
+    useEffect(() => {
+        firstUserMessageContentRef.current = '';
+    }, [activeTopicId]);
+
+    const summarizeTopicFromFirstUserMessage = useCallback(
+        async (firstUserMessage: IMessage) => {
+            if (!apiKey || !activeTopicId) return;
+
+            const summarizeModel = 'gpt-5-mini';
+            const openai = new OpenAI({
+                baseURL: `${window.location.origin}/api/openai`,
+                apiKey: apiKey,
+                dangerouslyAllowBrowser: true,
+            }) as OpenAI & {
+                responses: {
+                    create: (body: any) => Promise<any>;
+                };
+            };
+
+            openai.responses = {
+                create: async (body: any) => {
+                    const res = await fetch(`${window.location.origin}/api/openai/responses`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${apiKey}`,
+                        },
+                        body: JSON.stringify(body),
+                    });
+
+                    const json = await res.json();
+                    if (!res.ok) {
+                        const errMessage = json?.error?.message || 'Responses request failed';
+                        throw new Error(errMessage);
+                    }
+                    return json;
+                },
+            };
+
+            try {
+                const summaryJson = await openai.responses.create({
+                    model: summarizeModel,
+                    reasoning: { effort: 'low' },
+                    input: [
+                        {
+                            role: ERole.system,
+                            content: ChatSystemMessage(summarizeModel),
+                        },
+                        {
+                            role: firstUserMessage.role,
+                            content:
+                                SummarizePrompt +
+                                firstUserMessage.content.slice(0, 300) +
+                                '...',
+                        },
+                    ],
+                });
+                const tempTopicName = extractResponseText(summaryJson);
+
+                if (tempTopicName !== '') {
+                    updateActiveTopicName(tempTopicName);
+                }
+            } catch (err) {
+                console.error('Failed to summarize topic', err);
+            }
+        },
+        [apiKey, activeTopicId, updateActiveTopicName]
+    );
+
+    useEffect(() => {
+        if (!activeTopicId) return;
+
+        const firstUserMessage = messageList.find((item) => item.role === ERole.user);
+        if (!firstUserMessage || !firstUserMessage.content) return;
+
+        if (firstUserMessage.content === firstUserMessageContentRef.current) {
+            return;
+        }
+
+        firstUserMessageContentRef.current = firstUserMessage.content;
+        void summarizeTopicFromFirstUserMessage(firstUserMessage);
+    }, [messageList, activeTopicId, summarizeTopicFromFirstUserMessage]);
 
     useEffect(() => {
         const light_gpt_theme =

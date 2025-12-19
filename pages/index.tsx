@@ -119,69 +119,117 @@ const extractReasoningSummary = (payload: any): string => {
 };
 
 const parseResponsesStream = async (
-    response: Response,
+    response: Response | AsyncIterable<any>,
     appendChunk: (chunk: string) => void,
     onSummaryUpdate?: (summary: string) => void
 ): Promise<{ finalText: string; summaryText: string }> => {
-    if (!response.body) {
-        throw new Error('Responses stream missing body');
-    }
-
     let finalText = '';
+    let streamedText = '';
     let summaryText = '';
-    const decoder = new TextDecoder();
-    const parser = createParser((event) => {
-        if (event.type !== 'event') {
-            return;
-        }
-        if (event.data === '[DONE]') {
-            return;
-        }
-        try {
-            const data = JSON.parse(event.data);
-            if (data.error || data.type === 'response.error') {
-                throw new Error(data.error?.message || 'Responses stream error');
-            }
+    let summaryTextBuffer = '';
 
-            const maybeSummary = extractReasoningSummary(data.response ?? data);
-            if (maybeSummary && maybeSummary !== summaryText) {
-                summaryText = maybeSummary;
+    const isAsyncIterable = (value: any): value is AsyncIterable<any> =>
+        !!value && typeof value[Symbol.asyncIterator] === 'function';
+
+    const handleEvent = (data: any) => {
+        if (!data) return;
+
+        if (data.error || data.type === 'response.error') {
+            throw new Error(data.error?.message || data.message || 'Responses stream error');
+        }
+
+        if (data.type === 'response.output_text.delta') {
+            const deltaText =
+                typeof data.delta === 'string' ? data.delta : getContentText(data.delta);
+            if (deltaText) {
+                streamedText += deltaText;
+                appendChunk(deltaText);
+            }
+            return;
+        }
+
+        if (data.type === 'response.output_text.done') {
+            if (typeof data.output_text === 'string') {
+                streamedText = data.output_text;
+            }
+            return;
+        }
+
+        if (data.type === 'response.reasoning_summary_text.delta') {
+            if (typeof data.delta === 'string') {
+                summaryTextBuffer += data.delta;
+                summaryText = summaryTextBuffer;
                 onSummaryUpdate?.(summaryText);
             }
+            return;
+        }
 
-            const contentChunks =
-                data.delta?.content ??
-                data.choices?.[0]?.delta?.content ??
-                data.response?.output?.[0]?.content ??
-                [];
+        const maybeSummary = extractReasoningSummary(data.response ?? data);
+        if (maybeSummary && maybeSummary !== summaryText) {
+            summaryText = maybeSummary;
+            onSummaryUpdate?.(summaryText);
+        }
 
-            if (Array.isArray(contentChunks)) {
-                for (const content of contentChunks) {
-                    const text = getContentText(content);
-                    if (text) {
-                        appendChunk(text);
-                    }
+        const contentChunks =
+            data.delta?.content ??
+            data.choices?.[0]?.delta?.content ??
+            data.response?.output?.[0]?.content ??
+            [];
+
+        if (Array.isArray(contentChunks)) {
+            for (const content of contentChunks) {
+                const text = getContentText(content);
+                if (text) {
+                    streamedText += text;
+                    appendChunk(text);
                 }
             }
+        }
 
-            if (data.type === 'response.completed') {
-                finalText = extractResponseText(data.response ?? data);
+        if (data.type === 'response.completed') {
+            finalText = extractResponseText(data.response ?? data) || streamedText;
+            const finalSummary = extractReasoningSummary(data.response ?? data);
+            if (finalSummary) {
+                summaryText = finalSummary;
+                onSummaryUpdate?.(summaryText);
             }
-        } catch (error) {
-            throw error;
         }
-    });
+    };
 
-    const reader = response.body.getReader();
-    while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-            break;
+    if (isAsyncIterable(response)) {
+        for await (const event of response as AsyncIterable<any>) {
+            handleEvent(event);
         }
-        parser.feed(decoder.decode(value));
+    } else {
+        if (!response.body) {
+            throw new Error('Responses stream missing body');
+        }
+
+        const decoder = new TextDecoder();
+        const parser = createParser((event) => {
+            if (event.type !== 'event') {
+                return;
+            }
+            if (event.data === '[DONE]') {
+                return;
+            }
+            handleEvent(JSON.parse(event.data));
+        });
+
+        const reader = response.body.getReader();
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                break;
+            }
+            parser.feed(decoder.decode(value));
+        }
     }
 
-    return { finalText, summaryText };
+    return {
+        finalText: finalText || streamedText,
+        summaryText: summaryText || summaryTextBuffer,
+    };
 };
 
 export default function Home() {
@@ -479,27 +527,34 @@ export default function Home() {
                     const summarizeModel = 'gpt-5-mini';
                     const latestMessage = newMessageList[newMessageList.length - 1];
                     if (latestMessage) {
-                        const summaryJson = await openai.responses.create({
-                            model: summarizeModel,
-                            input: [
-                                {
-                                    role: ERole.system,
-                                    content: ChatSystemMessage(summarizeModel),
-                                },
-                                {
-                                    role: latestMessage.role,
-                                    content:
-                                        SummarizePrompt +
-                                        latestMessage.content.slice(0, 300) +
-                                        '...',
-                                },
-                            ],
-                        });
-                        const tempTopicName = extractResponseText(summaryJson);
+                        void (async () => {
+                            try {
+                                const summaryJson = await openai.responses.create({
+                                    model: summarizeModel,
+                                    reasoning: { effort: 'low' },
+                                    input: [
+                                        {
+                                            role: ERole.system,
+                                            content: ChatSystemMessage(summarizeModel),
+                                        },
+                                        {
+                                            role: latestMessage.role,
+                                            content:
+                                                SummarizePrompt +
+                                                latestMessage.content.slice(0, 300) +
+                                                '...',
+                                        },
+                                    ],
+                                });
+                                const tempTopicName = extractResponseText(summaryJson);
 
-                        if (tempTopicName !== '') {
-                            updateActiveTopicName(tempTopicName);
-                        }
+                                if (tempTopicName !== '') {
+                                    updateActiveTopicName(tempTopicName);
+                                }
+                            } catch (err) {
+                                console.error('Failed to summarize topic', err);
+                            }
+                        })();
                     }
                 }
             }

@@ -133,24 +133,17 @@ export const APIKeyLocalKey = 'light_gpt_api_key';
 
 
 export const TextModels = [
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', reasoning: false, description: '', cutOffDate: '2023-12' },
-    { id: 'gpt-4o', name: 'GPT-4o', reasoning: false, description: '', cutOffDate: '2023-10' },
-    { id: 'gpt-4o-mini', name: 'GPT-4o mini', reasoning: false, description: '', cutOffDate: '2023-10' },
-    { id: 'o1-mini', name: 'o1 mini', reasoning: true, description: '', cutOffDate: '2023-10' },
-];
-// TODO: add GPT-4o
-
-export const ImageModels = [
-    { id: 'dall-e-3', name: 'DALL·E 3', description: ''},
-    { id: 'dall-e-2', name: 'DALL·E 2', description: ''},
+    { id: 'gpt-5.2', name: 'GPT-5.2', description: '', cutOffDate: '2025-08-31' },
+    { id: 'gpt-5.2-pro', name: 'GPT-5.2 Pro', description: '', cutOffDate: '2025-08-31' },
+    { id: 'gpt-5-mini', name: 'GPT-5 Mini', description: '', cutOffDate: '2024-05-31' },
 ];
 
-export const Models = [...TextModels, ...ImageModels];
+export const Models = TextModels;
 
 export const GetAttributes = (modelId: string) => {
     const idx = TextModels.findIndex(model => model.id === modelId);
     if (idx == -1) {
-        return { id: modelId, name: modelId, reasoning: false, description: '', cutOffDate: 'Unknown' };
+        return { id: modelId, name: modelId, description: '', cutOffDate: 'Unknown' };
     }
     return TextModels[idx];
 }

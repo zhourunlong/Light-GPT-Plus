@@ -24,8 +24,7 @@ import { Theme, SystemSettingMenu, ERole, IMessage } from '../interface';
 
 import { ChatService } from '../DBClient';
 
-import { ImageModels } from "../utils";
-
+import { createParser } from 'eventsource-parser';
 import OpenAI from 'openai';
 
 import {
@@ -35,11 +34,103 @@ import {
     encrypt,
     decrypt,
     ChatSystemMessage,
-    GetAttributes,
     SummarizePrompt,
 } from '../utils';
 
 const chatDB = new ChatService();
+
+const getContentText = (content: any): string => {
+    if (!content) {
+        return '';
+    }
+    if (typeof content === 'string') {
+        return content;
+    }
+    if (typeof content.text === 'string') {
+        return content.text;
+    }
+    if (Array.isArray(content.parts)) {
+        return content.parts.join('');
+    }
+    return '';
+};
+
+const extractResponseText = (payload: any): string => {
+    if (!payload) {
+        return '';
+    }
+    if (typeof payload.output_text === 'string') {
+        return payload.output_text;
+    }
+    const pieces: string[] = [];
+    for (const output of payload.output ?? []) {
+        for (const content of output.content ?? []) {
+            const text = getContentText(content);
+            if (text) {
+                pieces.push(text);
+            }
+        }
+    }
+    return pieces.join('');
+};
+
+const parseResponsesStream = async (
+    response: Response,
+    appendChunk: (chunk: string) => void
+): Promise<string> => {
+    if (!response.body) {
+        throw new Error('Responses stream missing body');
+    }
+
+    let finalText = '';
+    const decoder = new TextDecoder();
+    const parser = createParser((event) => {
+        if (event.type !== 'event') {
+            return;
+        }
+        if (event.data === '[DONE]') {
+            return;
+        }
+        try {
+            const data = JSON.parse(event.data);
+            if (data.error || data.type === 'response.error') {
+                throw new Error(data.error?.message || 'Responses stream error');
+            }
+
+            const contentChunks =
+                data.delta?.content ??
+                data.choices?.[0]?.delta?.content ??
+                data.response?.output?.[0]?.content ??
+                [];
+
+            if (Array.isArray(contentChunks)) {
+                for (const content of contentChunks) {
+                    const text = getContentText(content);
+                    if (text) {
+                        appendChunk(text);
+                    }
+                }
+            }
+
+            if (data.type === 'response.completed') {
+                finalText = extractResponseText(data.response ?? data);
+            }
+        } catch (error) {
+            throw error;
+        }
+    });
+
+    const reader = response.body.getReader();
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+            break;
+        }
+        parser.feed(decoder.decode(value));
+    }
+
+    return finalText;
+};
 
 export default function Home() {
     const windowState = useRef({
@@ -189,14 +280,47 @@ export default function Home() {
         lastRequestTime: 0,
     });
 
-    const [selectedModel, setSelectedModel] = useState('gpt-4-turbo'); // Default model
+    const [selectedModel, setSelectedModel] = useState('gpt-5.2'); // Default model
    
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
         const openai = new OpenAI({
-            baseURL: window.location.href + "api/openai",
+            baseURL: `${window.location.origin}/api/openai`,
             apiKey: apiKey,
             dangerouslyAllowBrowser: true,
-        });
+        }) as OpenAI & {
+            responses: {
+                create: (body: any) => Promise<any>;
+            };
+        };
+
+        // minimal responses client matching the example signature
+        openai.responses = {
+            create: async (body: any) => {
+                const res = await fetch(`${window.location.origin}/api/openai/responses`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${apiKey}`,
+                    },
+                    body: JSON.stringify(body),
+                });
+
+                if (body?.stream) {
+                    if (!res.ok) {
+                        const errText = await res.text();
+                        throw new Error(errText || 'Responses stream failed');
+                    }
+                    return res;
+                }
+
+                const json = await res.json();
+                if (!res.ok) {
+                    const errMessage = json?.error?.message || 'Responses request failed';
+                    throw new Error(errMessage);
+                }
+                return json;
+            },
+        };
 
         // api request rate limit
         const now = Date.now();
@@ -224,8 +348,6 @@ export default function Home() {
             setServiceErrorMessage('Please enter your message.');
             return;
         }
-
-        const isGenerateImage = ImageModels.findIndex(model => model.id === selectedModel) != -1;
 
         let newMessageList = messageList.concat([]);
         if (isRegenerate) {
@@ -269,8 +391,7 @@ export default function Home() {
             }
         } else {
             // Add system message at the first step
-            const attributes = GetAttributes(selectedModel);
-            if (newMessageList.length === 0 && !(attributes.reasoning)) {
+            if (newMessageList.length === 0) {
                 const systemMessageItem = newSystemMessageItem(ChatSystemMessage(selectedModel));
                 newMessageList.push(systemMessageItem);
                 if (activeTopicId) {
@@ -292,28 +413,30 @@ export default function Home() {
 
                 // Summarize the sentence in 5 words or fewer for the topic name
                 if (newMessageList.length <= 2) {
-                    const summarizeModel = "gpt-3.5-turbo";
-                    const response = await openai.chat.completions.create({
-                        model: summarizeModel,
-                        messages: [
-                            {
-                                role: ERole.system,
-                                content: ChatSystemMessage(summarizeModel),
-                            },
-                            {
-                                role: newMessageList[-1].role,
-                                content: SummarizePrompt + newMessageList[-1].content.slice(0, 300) + '...',
-                            },
-                        ],
-                        // temperature: 0.7, TODO:
-                        // top_p: 0.9,
-                        stream: false,
-                    });
-                    
-                    const tempTopicName = response.choices[0]?.message?.content || "";
+                    const summarizeModel = 'gpt-5-mini';
+                    const latestMessage = newMessageList[newMessageList.length - 1];
+                    if (latestMessage) {
+                        const summaryJson = await openai.responses.create({
+                            model: summarizeModel,
+                            input: [
+                                {
+                                    role: ERole.system,
+                                    content: ChatSystemMessage(summarizeModel),
+                                },
+                                {
+                                    role: latestMessage.role,
+                                    content:
+                                        SummarizePrompt +
+                                        latestMessage.content.slice(0, 300) +
+                                        '...',
+                                },
+                            ],
+                        });
+                        const tempTopicName = extractResponseText(summaryJson);
 
-                    if (tempTopicName !== '') {
-                        updateActiveTopicName(tempTopicName);
+                        if (tempTopicName !== '') {
+                            updateActiveTopicName(tempTopicName);
+                        }
                     }
                 }
             }
@@ -324,56 +447,38 @@ export default function Home() {
         if (!userPromptRef.current) return;
         userPromptRef.current.style.height = 'auto';
         scrollSmoothThrottle();
-        
-        // TODO: support image generation
 
         // get response
         try {
             setServiceErrorMessage('');
             setLoadingTopicId(activeTopicId);
 
-            if (isGenerateImage) {
-                const userMessages = newMessageList.filter((item) => item.role === ERole.user);
-                const prompt = '\n'.concat(...userMessages);
-                response = await openai.images.generate({
-                    model: selectedModel,
-                    prompt: prompt,
-                    size: "1024×1024",
-                    response_format: "b64_json",
-                    quality: 'standard',
-                    style: 'natural',
-                })
-                const generateImgInfo = await response.json();
-                archiveCurrentMessage(generateImgInfo?.data?.[0]?.url);
-                setTimeout(() => {
-                    scrollSmoothThrottle();
-                }, 2000);
-            } else {
-                const stream = await openai.chat.completions.create({
-                    model: selectedModel,
-                    // reasoning_effort: "medium", TODO: set this as a parameter
-                    messages: newMessageList.map((item) => ({
-                        role: item.role,
-                        content: item.content,
-                    })),
-                    // temperature: 0.7, TODO
-                    // top_p: 0.9,
-                    stream: true,
-                });
-            
-                let response = "";
-                for await (const chunk of stream) {
-                    response += chunk.choices[0]?.delta?.content || "";
-                    setCurrentAssistantMessage(response);
+            const streamedMessages = newMessageList.map((item) => ({
+                role: item.role,
+                content: item.content,
+            }));
+
+            const streamResponse = await openai.responses.create({
+                model: selectedModel,
+                reasoning: { effort: 'medium' },
+                input: streamedMessages,
+                stream: true,
+            });
+
+            let assistantResponse = '';
+            const finalStreamText = await parseResponsesStream(
+                streamResponse,
+                (chunk) => {
+                    assistantResponse += chunk;
+                    setCurrentAssistantMessage(assistantResponse);
                 }
-                archiveCurrentAssistantMessage(response);
-            }
+            );
+
+            assistantResponse = finalStreamText || assistantResponse;
+            setCurrentAssistantMessage(assistantResponse);
+            archiveCurrentAssistantMessage(assistantResponse);
 
             apiRequestRateLimit.current.requestsThisMinute += 1;
-
-            // if (!response.ok) {
-            //     throw new Error(response.statusText);
-            // }
 
             setLoadingTopicId('');
         } catch (error: any) {
@@ -538,7 +643,6 @@ export default function Home() {
                                         updateEditedUserMessageId={updateEditedUserMessageId}
                                         editedUserMessage={editedUserMessage}
                                         updateEditedUserMessage={updateEditedUserMessage}
-                                        chatGPTWithLatestUserPrompt={chatGPTWithLatestUserPrompt}
                                     />
                                 ))}
                             {currentAssistantMessage.length > 0 && activeTopicId === loadingTopicId && (

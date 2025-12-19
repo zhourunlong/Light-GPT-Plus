@@ -12,71 +12,186 @@ import globalStyles from '../../../styles/Home.module.scss';
 
 import MarkdownIt from 'markdown-it';
 import MdHighlight from 'markdown-it-highlightjs';
-import MdKatex from 'markdown-it-katex';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/atom-one-dark.css';
 
 Highlightjs.registerLanguage('regex', regex);
 
-function replaceEquationDelimiters(inputString: string) {
-    // Split input into code and non-code blocks
-    const blocks = inputString.split(/(```[\s\S]*?```)/);
+function normalizeMathDelimiters(input: string) {
+    if (!input) return '';
 
-    // Regular expression to match paired brackets outside code blocks
-    const inlineRegex = /\\\(.*?\\\)/g, displayRegex = /\\\[.*?\\\]/g;
+    const codeFenceSplitRegex = /(```[\s\S]*?```)/g;
+    const displayRegex = /\\\[([\s\S]*?)\\\]/g;
+    const inlineRegex = /\\\(([\s\S]*?)\\\)/g;
 
-    let replacedString = "";
+    return input
+        .split(codeFenceSplitRegex)
+        .map((segment, index) => {
+            // Preserve fenced code blocks exactly as written
+            if (index % 2 === 1) return segment;
 
-    // Iterate over non-code blocks and replace paired brackets with Markdown
-    for (let i = 0; i < blocks.length; i++) {
-        if (i % 2 === 0) {
-            let blockMatches = blocks[i].match(inlineRegex);
-            if (blockMatches) {
-                blocks[i] = blocks[i].replace(inlineRegex, (match) => `\$${match.slice(2, -2).trim()}\$`);
-            }
+            const displayNormalized = segment.replace(
+                displayRegex,
+                (_, content: string) => `\n$$\n${content.trim()}\n$$\n`
+            );
 
-            blockMatches = blocks[i].match(displayRegex);
-            if (blockMatches) {
-                blocks[i] = blocks[i].replace(displayRegex, (match) => `\$\$${match.slice(2, -2).trim()}\$\$`);
-            }
-        }
-        replacedString += blocks[i];
-    }
-
-    return replacedString;
+            return displayNormalized.replace(
+                inlineRegex,
+                (_, content: string) => `$${content.trim()}$`
+            );
+        })
+        .join('');
 }
 
-function renderMarkdown(message: string) {
-    message = replaceEquationDelimiters(message);
+/**
+ * Custom KaTeX renderer to reliably handle inline ($...$, \\(\\)) and
+ * display ($$...$$, \\[\\]) math, including multi-line blocks.
+ */
+function attachMathRenderer(md: MarkdownIt) {
+    const isEscaped = (src: string, pos: number) => {
+        let backslashCount = 0;
+        for (let i = pos - 1; i >= 0 && src[i] === '\\'; i--) backslashCount++;
+        return backslashCount % 2 === 1;
+    };
 
+    const inlineRule = (state: any, silent: boolean) => {
+        const start = state.pos;
+        if (state.src[start] !== '$') return false;
+        // Skip block $$ sequences
+        if (state.src[start + 1] === '$') return false;
+
+        let match = start + 1;
+        while ((match = state.src.indexOf('$', match)) !== -1) {
+            if (isEscaped(state.src, match)) {
+                match++;
+                continue;
+            }
+            const content = state.src.slice(start + 1, match);
+            if (!content.trim()) {
+                match++;
+                continue;
+            }
+            if (!silent) {
+                const token = state.push('math_inline', 'math', 0);
+                token.content = content.trim();
+            }
+            state.pos = match + 1;
+            return true;
+        }
+        return false;
+    };
+
+    const blockRule = (state: any, startLine: number, endLine: number, silent: boolean) => {
+        const startPos = state.bMarks[startLine] + state.tShift[startLine];
+        const maxPos = state.eMarks[startLine];
+        const line = state.src.slice(startPos, maxPos);
+        if (!line.startsWith('$$')) return false;
+
+        // Single-line $$...$$
+        if (line.slice(2).includes('$$')) {
+            const closeIndex = line.indexOf('$$', 2);
+            const content = line.slice(2, closeIndex).trim();
+            if (!silent) {
+                const token = state.push('math_block', 'math', 0);
+                token.block = true;
+                token.content = content;
+                token.map = [startLine, startLine + 1];
+                token.markup = '$$';
+            }
+            state.line = startLine + 1;
+            return true;
+        }
+
+        // Multi-line: search for closing $$
+        let nextLine = startLine;
+        let found = false;
+        while (++nextLine < endLine) {
+            const lineStart = state.bMarks[nextLine] + state.tShift[nextLine];
+            const lineEnd = state.eMarks[nextLine];
+            const text = state.src.slice(lineStart, lineEnd);
+            if (text.startsWith('$$')) {
+                found = true;
+                const firstLine = state.src.slice(startPos + 2, maxPos);
+                const middle = state.getLines(startLine + 1, nextLine, state.tShift[startLine], true);
+                const lastLine = text.slice(2);
+                const content = [firstLine, middle, lastLine].join('\n').trim();
+
+                if (!silent) {
+                    const token = state.push('math_block', 'math', 0);
+                    token.block = true;
+                    token.content = content;
+                    token.map = [startLine, nextLine + 1];
+                    token.markup = '$$';
+                }
+                state.line = nextLine + 1;
+                return true;
+            }
+        }
+
+        return found;
+    };
+
+    md.inline.ruler.after('escape', 'math_inline', inlineRule);
+    md.block.ruler.after('blockquote', 'math_block', blockRule, {
+        alt: ['paragraph', 'reference', 'blockquote', 'list'],
+    });
+
+    const cleanMath = (content: string) => content.replace(/\\\*/g, '*');
+
+    md.renderer.rules.math_inline = (tokens, idx) =>
+        katex.renderToString(cleanMath(tokens[idx].content), {
+            throwOnError: false,
+        });
+
+    md.renderer.rules.math_block = (tokens, idx) =>
+        katex.renderToString(cleanMath(tokens[idx].content), {
+            throwOnError: false,
+            displayMode: true,
+        });
+}
+
+const markdownRenderer = (() => {
     const md = MarkdownIt()
         .use(MdHighlight, {
             hljs: Highlightjs,
-        })
-        .use(MdKatex);
+        });
+
+    attachMathRenderer(md);
+
     const originalFence = md.renderer.rules.fence;
-    if (!originalFence) return '';
-    md.renderer.rules.fence = (...args) => {
-        const [tokens, idx] = args;
+    md.renderer.rules.fence = (tokens, idx, options, env, self) => {
         const token = tokens[idx];
-        const rawCode = originalFence(...args);
+        const rawCode = originalFence
+            ? originalFence(tokens, idx, options, env, self)
+            : self.renderToken(tokens, idx, options);
         return `<div class='highlight-js-pre-container'>
-    <div id class="copy" data-code=${encodeURIComponent(token.content)}>
-    <i class="fa fa-clipboard" aria-hidden="true"></i>
-    </div>
+    <button class="copy" type="button" data-code="${encodeURIComponent(token.content)}">
+        <i class="fa fa-clipboard" aria-hidden="true"></i>
+    </button>
     ${rawCode}
     </div>`;
     };
 
-    const originalCodeInline = md.renderer.rules.code_inline;
-    if (!originalCodeInline) return '';
-    md.renderer.rules.code_inline = (...args) => {
-        const [tokens, idx] = args;
+    md.renderer.rules.code_inline = (tokens, idx) => {
         const token = tokens[idx];
         return `<code class="${styles.inlineCode}">${md.utils.escapeHtml(token.content)}</code>`;
     };
 
-    return md.render(message || '');
+    return md;
+})();
+
+export function renderMarkdown(message: string) {
+    const normalizedMessage = normalizeMathDelimiters(message);
+    return markdownRenderer.render(normalizedMessage || '');
 };
+
+// Helpful smoke cases for quick manual verification
+export const mathRenderSmokeTests = [
+    '\\\\[\\\\max_{\\\\text{policy}} \\\\ \\\\inf_{\\\\substack{T\\\\ge 0\\\\\\\\ \\\\mathbb{E}[T]=\\\\mu}} \\\\Pr(\\\\text{finish by }N).\\\\]',
+    'Pick \\\\(m^*\\\\) that maximizes it, and use \\\\(m^*\\\\) equal slices',
+    'Choose \\\\(m^*=\\\\arg\\\\max g(m).\\\\)',
+];
 
 
 const MessageEditor: React.FC<{
@@ -122,8 +237,8 @@ const MessageEditor: React.FC<{
             <div className={globalStyles.buttonContainer}>
                 <button className={globalStyles.saveButton} 
                     onClick={() => {
-                        updateEditedMessageId(id);
-                        updateEditedMessage(tempMessage);
+                        updateEditedMessageId?.(id);
+                        updateEditedMessage?.(tempMessage);
                         updateEditingMessage(false);
                     }}
                 >

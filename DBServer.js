@@ -20,9 +20,26 @@ db.serialize(() => {
         id TEXT PRIMARY KEY,
         role TEXT NOT NULL,
         content TEXT NOT NULL,
+        summary TEXT DEFAULT '',
         topicId TEXT NOT NULL,
         createdAt INTEGER NOT NULL
     )`);
+
+    // Ensure the summary column exists for older databases
+    db.all(`PRAGMA table_info(conversations)`, (err, rows) => {
+        if (err) {
+            console.error('Failed to inspect conversations schema', err);
+            return;
+        }
+        const hasSummary = rows.some((row) => row.name === 'summary');
+        if (!hasSummary) {
+            db.run(`ALTER TABLE conversations ADD COLUMN summary TEXT DEFAULT ''`, (alterErr) => {
+                if (alterErr) {
+                    console.error('Failed to add summary column to conversations table', alterErr);
+                }
+            });
+        }
+    });
 });
 
 
@@ -104,10 +121,10 @@ app.get('/topics/by-id/:topicId/conversations', (req, res) => {
 
 
 function addConversation(conversation, callback) {
-    const { id, role, content, topicId, createdAt } = conversation;
-    const insertSql = `INSERT INTO conversations (id, role, content, topicId, createdAt) VALUES (?, ?, ?, ?, ?)`;
+    const { id, role, content, summary = '', topicId, createdAt } = conversation;
+    const insertSql = `INSERT INTO conversations (id, role, content, summary, topicId, createdAt) VALUES (?, ?, ?, ?, ?, ?)`;
     const updateSql = `UPDATE topics SET modifiedAt = ? WHERE id = ?`;
-    db.run(insertSql, [id, role, content, topicId, createdAt], function(err) {
+    db.run(insertSql, [id, role, content, summary, topicId, createdAt], function(err) {
         if (err) {
             callback(err);
             return;

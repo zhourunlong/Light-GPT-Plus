@@ -37,6 +37,12 @@
     .assistant {
         margin-right: 20px;
     }
+    .assistantMain {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 10px;
+    }
     .userMainContent {
         display: grid;
         flex: 1;
@@ -65,6 +71,42 @@
             padding: 1px 2px 1px 2px;
             border-radius: 4px;
             vertical-align: middle;
+        }
+    }
+    .summaryBox {
+        border-radius: 12px;
+        padding: 12px 16px;
+        border: 1px dashed var(--border-color);
+        background-color: var(--extra-light-bg-color);
+        color: var(--text-color-normal);
+        .summaryLabel {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            color: var(--text-color-light);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .summaryText {
+            white-space: normal;
+            line-height: 1.4;
+            font-size: 14px;
+            :global(p) {
+                margin: 4px 0;
+            }
+            :global(code) {
+                font-size: 13px;
+                background-color: var(--extra-light-bg-color);
+                padding: 1px 3px;
+                border-radius: 4px;
+            }
+            :global(pre) {
+                margin: 6px 0;
+                padding: 10px;
+                border-radius: 8px;
+                background-color: var(--body-bg);
+                overflow-x: auto;
+            }
         }
     }
     .imgContent {

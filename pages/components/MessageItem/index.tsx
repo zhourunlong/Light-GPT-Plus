@@ -259,11 +259,12 @@ const MessageItem: React.FC<{
     role: ERole;
     message: string;
     avatar: string;
+    summary?: string;
     editedUserMessageId?: string;
     updateEditedUserMessageId?: (id: string) => void;
     editedUserMessage?: string;
     updateEditedUserMessage?: (msg: string) => void;
-}> = ({ id, role, message, avatar, editedUserMessageId, updateEditedUserMessageId, editedUserMessage, updateEditedUserMessage }) => {
+}> = ({ id, role, message, avatar, summary, editedUserMessageId, updateEditedUserMessageId, editedUserMessage, updateEditedUserMessage }) => {
     const isImgResponse = message?.startsWith(
         'https://oaidalleapiprodscus.blob.core.windows.net/private'
     );
@@ -364,25 +365,38 @@ const MessageItem: React.FC<{
                             alt="robot"
                         />
                     </div>
-                    {isImgResponse ? (
-                        <div className={styles.imgContent}>
-                            <Image
-                                className={styles.dellImage}
-                                width={1024}
-                                height={1024}
-                                src={message}
-                                alt="generateImgWithText"
-                                loading="lazy"
-                            />
-                        </div>
-                    ) : (
-                        <div
-                            className={styles.htmlContent}
-                            dangerouslySetInnerHTML={{
-                                __html: renderMarkdown(message)
-                            }}
-                        ></div>
-                    )}
+                    <div className={styles.assistantMain}>
+                        {summary && (
+                            <div className={styles.summaryBox}>
+                                <div className={styles.summaryLabel}>Reasoning</div>
+                                <div
+                                    className={styles.summaryText}
+                                    dangerouslySetInnerHTML={{
+                                        __html: renderMarkdown(summary),
+                                    }}
+                                ></div>
+                            </div>
+                        )}
+                        {isImgResponse ? (
+                            <div className={styles.imgContent}>
+                                <Image
+                                    className={styles.dellImage}
+                                    width={1024}
+                                    height={1024}
+                                    src={message}
+                                    alt="generateImgWithText"
+                                    loading="lazy"
+                                />
+                            </div>
+                        ) : (
+                            <div
+                                className={styles.htmlContent}
+                                dangerouslySetInnerHTML={{
+                                    __html: renderMarkdown(message)
+                                }}
+                            ></div>
+                        )}
+                    </div>
                     <div className={styles.placeholder}></div>
                 </>
             )}

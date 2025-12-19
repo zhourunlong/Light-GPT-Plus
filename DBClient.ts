@@ -11,6 +11,7 @@ export interface Conversation {
     id: string;
     role: string;
     content: string;
+    summary?: string;
     topicId: string;
     createdAt: number;
 }
@@ -75,6 +76,7 @@ export class ChatService {
                     id: item.id,
                     role: item.role,
                     content: item.content,
+                    summary: item.summary ?? '',
                     topicId: item.topicId,
                     createdAt: item.createdAt,
                 }));
@@ -90,7 +92,10 @@ export class ChatService {
         return fetch(`${BASE_URL}/conversations`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(conversation),
+            body: JSON.stringify({
+                ...conversation,
+                summary: conversation.summary ?? '',
+            }),
         })
             .then(response => {
                 if (!response.ok) {

@@ -74,15 +74,61 @@ const extractResponseText = (payload: any): string => {
     return pieces.join('');
 };
 
+const extractReasoningSummary = (payload: any): string => {
+    if (!payload) {
+        return '';
+    }
+
+    const summaries: string[] = [];
+    const collectText = (entry: any) => {
+        if (!entry) return;
+        if (typeof entry === 'string') {
+            summaries.push(entry);
+        } else if (typeof entry.text === 'string') {
+            summaries.push(entry.text);
+        }
+    };
+
+    const collectArray = (maybeArray: any) => {
+        if (Array.isArray(maybeArray)) {
+            maybeArray.forEach(collectText);
+        }
+    };
+
+    collectArray(payload.summary);
+    collectArray(payload.reasoning?.summary);
+    collectArray(payload.response?.reasoning?.summary);
+
+    const outputs = payload.output ?? payload.response?.output ?? [];
+    if (Array.isArray(outputs)) {
+        for (const output of outputs) {
+            collectArray(output?.summary);
+            collectArray(output?.reasoning?.summary);
+        }
+    }
+
+    const uniqueSummaries = Array.from(
+        new Set(
+            summaries
+                .map((text) => text?.trim())
+                .filter((text) => !!text)
+        )
+    );
+
+    return uniqueSummaries.join('\n\n');
+};
+
 const parseResponsesStream = async (
     response: Response,
-    appendChunk: (chunk: string) => void
-): Promise<string> => {
+    appendChunk: (chunk: string) => void,
+    onSummaryUpdate?: (summary: string) => void
+): Promise<{ finalText: string; summaryText: string }> => {
     if (!response.body) {
         throw new Error('Responses stream missing body');
     }
 
     let finalText = '';
+    let summaryText = '';
     const decoder = new TextDecoder();
     const parser = createParser((event) => {
         if (event.type !== 'event') {
@@ -95,6 +141,12 @@ const parseResponsesStream = async (
             const data = JSON.parse(event.data);
             if (data.error || data.type === 'response.error') {
                 throw new Error(data.error?.message || 'Responses stream error');
+            }
+
+            const maybeSummary = extractReasoningSummary(data.response ?? data);
+            if (maybeSummary && maybeSummary !== summaryText) {
+                summaryText = maybeSummary;
+                onSummaryUpdate?.(summaryText);
             }
 
             const contentChunks =
@@ -129,7 +181,7 @@ const parseResponsesStream = async (
         parser.feed(decoder.decode(value));
     }
 
-    return finalText;
+    return { finalText, summaryText };
 };
 
 export default function Home() {
@@ -181,34 +233,43 @@ export default function Home() {
 
     function newSystemMessageItem(systemMessage: string): IMessage {
         return {
-          role: ERole.system,
-          content: systemMessage,
-          id: uuid(),
-          createdAt: Date.now(),
+            role: ERole.system,
+            content: systemMessage,
+            summary: '',
+            id: uuid(),
+            createdAt: Date.now(),
         };
     }
 
     function newUserMessageItem(userMessage: string): IMessage {
         return {
-          role: ERole.user,
-          content: userMessage,
-          id: uuid(),
-          createdAt: Date.now(),
+            role: ERole.user,
+            content: userMessage,
+            summary: '',
+            id: uuid(),
+            createdAt: Date.now(),
         };
     }
 
-    function newAssistantMessageItem(assistantMessage: string): IMessage {
+    function newAssistantMessageItem(assistantMessage: string, summary = ''): IMessage {
         return {
-          role: ERole.assistant,
-          content: assistantMessage,
-          id: uuid(),
-          createdAt: Date.now(),
+            role: ERole.assistant,
+            content: assistantMessage,
+            summary,
+            id: uuid(),
+            createdAt: Date.now(),
         };
     }
 
-    const archiveCurrentAssistantMessage = (newCurrentAssistantMessage: string) => {
+    const archiveCurrentAssistantMessage = (
+        newCurrentAssistantMessage: string,
+        summary = ''
+    ) => {
         if (newCurrentAssistantMessage) {
-            const assistantMessageItem = newAssistantMessageItem(newCurrentAssistantMessage);
+            const assistantMessageItem = newAssistantMessageItem(
+                newCurrentAssistantMessage,
+                summary
+            );
             setMessageList((list) => list.concat([assistantMessageItem]));
             if (activeTopicId) {
                 chatDB.addConversation({
@@ -218,6 +279,7 @@ export default function Home() {
             }
             setLoadingTopicId('');
             setCurrentAssistantMessage('');
+            setCurrentAssistantSummary('');
             scrollSmoothThrottle();
         }
     };
@@ -236,6 +298,7 @@ export default function Home() {
     const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
     const [currentAssistantMessage, setCurrentAssistantMessage] = useState('');
+    const [currentAssistantSummary, setCurrentAssistantSummary] = useState('');
     const tempCurrentAssistantMessageId = useRef(uuid());
 
     const [editedUserMessageId, setEditedUserMessageId] = useState('');
@@ -443,6 +506,7 @@ export default function Home() {
         }
 
         setMessageList(newMessageList);
+        setCurrentAssistantSummary('');
         userPromptRef.current!.value = '';
         if (!userPromptRef.current) return;
         userPromptRef.current.style.height = 'auto';
@@ -460,29 +524,37 @@ export default function Home() {
 
             const streamResponse = await openai.responses.create({
                 model: selectedModel,
-                reasoning: { effort: 'medium' },
+                reasoning: { effort: 'medium', summary: 'auto' },
                 input: streamedMessages,
                 stream: true,
             });
 
             let assistantResponse = '';
-            const finalStreamText = await parseResponsesStream(
+            let summaryText = '';
+            const { finalText, summaryText: finalSummaryText } = await parseResponsesStream(
                 streamResponse,
                 (chunk) => {
                     assistantResponse += chunk;
                     setCurrentAssistantMessage(assistantResponse);
+                },
+                (summary) => {
+                    summaryText = summary;
+                    setCurrentAssistantSummary(summary);
                 }
             );
 
-            assistantResponse = finalStreamText || assistantResponse;
+            assistantResponse = finalText || assistantResponse;
             setCurrentAssistantMessage(assistantResponse);
-            archiveCurrentAssistantMessage(assistantResponse);
+            const reasoningSummary = finalSummaryText || summaryText;
+            setCurrentAssistantSummary(reasoningSummary);
+            archiveCurrentAssistantMessage(assistantResponse, reasoningSummary);
 
             apiRequestRateLimit.current.requestsThisMinute += 1;
 
             setLoadingTopicId('');
         } catch (error: any) {
             setLoadingTopicId('');
+            setCurrentAssistantSummary('');
 
             setServiceErrorMessage(error?.message || 'Unknown Service Error');
         }
@@ -639,6 +711,7 @@ export default function Home() {
                                                 : robotAvatar
                                         }
                                         message={item.content}
+                                        summary={item.summary}
                                         editedUserMessageId={editedUserMessageId}
                                         updateEditedUserMessageId={updateEditedUserMessageId}
                                         editedUserMessage={editedUserMessage}
@@ -651,6 +724,7 @@ export default function Home() {
                                     role={ERole.assistant}
                                     avatar={robotAvatar}
                                     message={currentAssistantMessage}
+                                    summary={currentAssistantSummary}
                                 />
                             )}
                             <div className={styles.placeholder}>

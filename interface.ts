@@ -9,6 +9,7 @@ export interface IMessage {
     content: string;
     id: string;
     createdAt: number;
+    summary?: string;
 }
 
 export type Theme = 'light' | 'dark';

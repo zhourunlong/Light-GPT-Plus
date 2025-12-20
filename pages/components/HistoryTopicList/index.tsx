@@ -13,7 +13,7 @@ const chatDB = new ChatService();
 const HistoryTopicList: React.FC<{
     historyTopicListVisible: boolean;
     encApiKey: string;
-    updateCurrentMessageList: (messages: IMessage[]) => void;
+    updateCurrentMessageList: (messages: IMessage[], options?: { fromHistory?: boolean }) => void;
     activeTopicId: string;
     updateActiveTopicId: (id: string) => void;
     activeTopicName: string;
@@ -56,7 +56,7 @@ const HistoryTopicList: React.FC<{
 
         updateActiveTopicId(topicId);
         updateActiveTopicName(newTopicName);
-        updateCurrentMessageList([]);
+        updateCurrentMessageList([], { fromHistory: true });
         
         setHistoryTopicList(newHistoryTopicList);
     };
@@ -81,28 +81,43 @@ const HistoryTopicList: React.FC<{
         const init = async () => {
             // TODO: Initially display key="", fix this
             let topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
-            setHistoryTopicList(topics);
-
             if (topics.length === 0) {
                 // TODO: This may result in messages not stored in the database
                 generateTopic();
                 topics = await chatDB.getTopics(encApiKeyHeader + encApiKey);
-                setHistoryTopicList(topics);
             }
 
-            updateActiveTopicId(topics[0].id);
+            setHistoryTopicList(topics);
+
+            // Keep the current active topic if it still exists; otherwise, fall back
+            const currentTopicId =
+                activeTopicId && topics.find((t) => t.id === activeTopicId)
+                    ? activeTopicId
+                    : topics[0]?.id;
+
+            if (!currentTopicId) return;
+
+            if (currentTopicId !== activeTopicId) {
+                updateActiveTopicId(currentTopicId);
+            }
+
+            const currentTopic = topics.find((t) => t.id === currentTopicId);
+            if (currentTopic) {
+                updateActiveTopicName(currentTopic.name);
+            }
 
             showMask();
             const newCurrentMessageList = await chatDB.getConversationsByTopicId(
-                topics[0].id
+                currentTopicId
             );
-            updateCurrentMessageList(newCurrentMessageList as IMessage[]);
+            updateCurrentMessageList(newCurrentMessageList as IMessage[], { fromHistory: true });
             hideMask();
         };
         init();
     }, [
         encApiKey,
         lastTimeStamp,
+        activeTopicId,
     ]);
 
     const [editingTopicName, setEditingTopicName] = useState(false);
@@ -144,6 +159,7 @@ const HistoryTopicList: React.FC<{
                                 } `}
                                 onClick={async () => {
                                     updateActiveTopicId(item.id);
+                                    updateActiveTopicName(item.name);
 
                                     showMask();
                             
@@ -152,7 +168,8 @@ const HistoryTopicList: React.FC<{
                                             item.id
                                         );
                                     updateCurrentMessageList(
-                                        newCurrentMessageList as IMessage[]
+                                        newCurrentMessageList as IMessage[],
+                                        { fromHistory: true }
                                     );
 
                                     hideMask();
@@ -223,7 +240,8 @@ const HistoryTopicList: React.FC<{
                                                                 )
                                                         );
                                                         updateCurrentMessageList(
-                                                            []
+                                                            [],
+                                                            { fromHistory: true }
                                                         );
                                                     }
                                                     setEditingTopicName(false);

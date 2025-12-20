@@ -339,9 +339,19 @@ export default function Home() {
         setMessageList((list) => list.filter((item) => item.id !== id));
     }, []);
 
-    const updateCurrentMessageList = useCallback((messages: IMessage[]) => {
-        setMessageList(messages);
-    }, []);
+    const updateCurrentMessageList = useCallback(
+        (messages: IMessage[], options?: { fromHistory?: boolean }) => {
+            if (options?.fromHistory) {
+                const firstUserMessage = messages.find(
+                    (item) => item.role === ERole.user && item.content
+                );
+                firstUserMessageContentRef.current =
+                    firstUserMessage?.content || '';
+            }
+            setMessageList(messages);
+        },
+        []
+    );
 
     const userPromptRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -594,9 +604,6 @@ export default function Home() {
     }, []);
 
     const firstUserMessageContentRef = useRef('');
-    useEffect(() => {
-        firstUserMessageContentRef.current = '';
-    }, [activeTopicId]);
 
     const summarizeTopicFromFirstUserMessage = useCallback(
         async (firstUserMessage: IMessage) => {

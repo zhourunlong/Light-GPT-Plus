@@ -6,9 +6,16 @@
     align-items: center;
     box-sizing: border-box;
     padding: 20px;
+    position: relative;
     
+    .leftControls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     .modelSelector {
-      flex: 1;
+      position: relative;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -73,11 +80,15 @@
     }
 
     .siteIntroduction {
-        flex: 1;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        text-align: center;
 
         .title {
             color: rgba(148, 163, 184, 1);
@@ -112,6 +123,34 @@
             font-size: 1rem;
             font-weight: 400;
             color: rgba(148, 163, 184, 1);
+        }
+    }
+    .effortSelector {
+        flex: 1;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 8px;
+        margin-left: 16px;
+
+        .effortButton {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background-color: var(--body-bg);
+            color: var(--text-color-normal);
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+            &.active {
+                background-color: var(--extra-light-bg-color);
+                border-color: var(--text-color-normal);
+                font-weight: 600;
+            }
+
+            &:hover {
+                background-color: var(--extra-light-bg-color);
+            }
         }
     }
     .sideMenus {

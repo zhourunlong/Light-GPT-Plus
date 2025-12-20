@@ -402,6 +402,9 @@ export default function Home() {
     });
 
     const [selectedModel, setSelectedModel] = useState('gpt-5.2'); // Default model
+    const [selectedReasoningEffort, setSelectedReasoningEffort] = useState<
+        'low' | 'medium' | 'high'
+    >('medium');
    
     const chatGPTWithLatestUserPrompt = async (isRegenerate = false) => {
         const openai = new OpenAI({
@@ -553,7 +556,7 @@ export default function Home() {
 
             const streamResponse = await openai.responses.create({
                 model: selectedModel,
-                reasoning: { effort: 'medium', summary: 'auto' },
+                reasoning: { effort: selectedReasoningEffort, summary: 'auto' },
                 input: streamedMessages,
                 stream: true,
             });
@@ -799,6 +802,8 @@ export default function Home() {
                         updateTheme={updateTheme}
                         selectedModel={selectedModel}
                         setSelectedModel={setSelectedModel}
+                        selectedReasoningEffort={selectedReasoningEffort}
+                        setSelectedReasoningEffort={setSelectedReasoningEffort}
                     />
                 </div>
                 <div className={styles.main}>
